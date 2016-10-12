@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">vocabulary2</string>
+
+    <string name="bottom_menu_category">广场</string>
+    <string name="bottom_menu_collection">收藏</string>
+    <string name="bottom_menu_mine">我的</string>
+
+    <string name="action_setting">设置</string>
+    <string name="action_refresh">刷新</string>
+    <string name="action_category_add">添加</string>
+    <string name="action_save">保存</string>
+
+
+    <string name="network_not_connected">暂无网络连接，请检查您的网络设置</string>
+
+    <string name="request_check_code_message">短信验证码已发送</string>
+    <string name="request_check_code_error">获取验证码失败</string>
+
+    <string name="request_error">请求服务失败，可能原因：网络不可用或者服务器不可用</string>
+
+    <string name="request_login_error">登录失败</string>
+
+    <string name="parse_data_error">服务器数据错误</string>
+    <string name="parse_register_date_error">注册时间错误</string>
+    <string name="parse_category_create_time_error">类别创建时间错误</string>
+
+
+    <string name="category_edit_name_text">名称</string>
+    <string name="category_image_text">图片</string>
+    <string name="category_edit_translation_text">译文</string>
+
+    <string name="select_image_text">选择图片</string>
+
+    <string name="category_public_text">公开</string>
+
+    <string name="refresh_start_text">正在刷新,请稍候...</string>
+    <string name="refresh_end_text">刷新完成</string>
+
+    <string name="upload_category_success_text">词汇类别上传成功</string>
+    <string name="upload_category_error_text">词汇类别上传失败，已保存到本地</string>
+
+
+</resources>

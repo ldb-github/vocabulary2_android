@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/card_height"
+    android:layout_gravity="center"
+    android:layout_marginTop="@dimen/spacing_normal"
+    android:layout_marginLeft="@dimen/spacing_double"
+    android:layout_marginRight="@dimen/spacing_double"
+    android:layout_marginBottom="@dimen/spacing_normal"
+    android:foreground="?attr/selectableItemBackground">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_micro">
+
+        <ImageView
+            android:id="@+id/card_image"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/card_image_height"
+            android:contentDescription="@string/category_image_text"
+            android:scaleType="centerCrop"/>
+
+        <TextView
+            android:id="@+id/card_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/card_image"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textColor="@color/dark_grey"
+            android:text="Unknown"
+            android:padding="@dimen/spacing_micro"
+            android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/card_last_read"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/card_name"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textColor="@color/dark_grey"
+            android:padding="@dimen/spacing_micro"
+            android:singleLine="true"/>
+
+        <ImageButton
+            android:id="@+id/card_favorite"
+            android:layout_width="@dimen/cards_button_width"
+            android:layout_height="@dimen/cards_button_width"
+            android:layout_marginTop="@dimen/spacing_double"
+            android:layout_marginRight="@dimen/spacing_double"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            app:srcCompat="@drawable/ic_favorite"
+            style="?android:attr/borderlessButtonStyle"/>
+
+        <ImageButton
+            android:id="@+id/card_upload"
+            android:layout_width="@dimen/cards_button_width"
+            android:layout_height="@dimen/cards_button_width"
+            android:layout_marginTop="@dimen/spacing_double"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            android:layout_alignParentBottom="true"
+            android:layout_toLeftOf="@id/card_favorite"
+            app:srcCompat="@drawable/ic_cloud_upload"
+            style="?android:attr/borderlessButtonStyle"/>
+
+
+    </RelativeLayout>
+</android.support.v7.widget.CardView>
