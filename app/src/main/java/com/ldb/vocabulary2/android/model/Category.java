@@ -27,10 +27,10 @@ public class Category implements Parcelable {
     private boolean mHasNew;
     private String mLocalId;
 
-    public Category(){
+    public Category() {
     }
 
-    private Category(Parcel source){
+    private Category(Parcel source) {
         mId = source.readString();
         mName = source.readString();
         mImage = source.readString();
@@ -39,19 +39,21 @@ public class Category implements Parcelable {
         mWordCount = source.readInt();
         mLanguage = source.readString();
         mUsername = source.readString();
-        if(source.readLong() == 0){
+        Long time = source.readLong();
+        if (time == 0) {
             mCreateTime = null;
-        }else {
-            mCreateTime = new Date(source.readLong());
+        } else {
+            mCreateTime = new Date(time);
         }
         mTranslation = source.readString();
         mImageLocal = source.readString();
         mIsUploaded = source.readInt() == 1;
         mIsFavorite = source.readInt() == 1;
-        if(source.readLong() == 0){
+        time = source.readLong();
+        if (time == 0) {
             mLastRead = null;
-        }else {
-            mLastRead = new Date(source.readLong());
+        } else {
+            mLastRead = new Date(time);
         }
         mHasNew = source.readInt() == 1;
         mLocalId = source.readString();
@@ -72,18 +74,18 @@ public class Category implements Parcelable {
         dest.writeInt(mWordCount);
         dest.writeString(mLanguage);
         dest.writeString(mUsername);
-        if(mCreateTime == null){
+        if (mCreateTime == null) {
             dest.writeLong(0);
-        }else {
+        } else {
             dest.writeLong(mCreateTime.getTime());
         }
         dest.writeString(mTranslation);
         dest.writeString(mImageLocal);
         dest.writeInt(mIsUploaded ? 1 : 0);
         dest.writeInt(mIsFavorite ? 1 : 0);
-        if(mLastRead == null){
+        if (mLastRead == null) {
             dest.writeLong(0);
-        }else {
+        } else {
             dest.writeLong(mLastRead.getTime());
         }
         dest.writeInt(mHasNew ? 1 : 0);

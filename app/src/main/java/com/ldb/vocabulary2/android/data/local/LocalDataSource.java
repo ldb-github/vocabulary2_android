@@ -14,7 +14,13 @@ import java.util.List;
  * Created by lsp on 2016/9/17.
  */
 public interface LocalDataSource {
-
+    /**
+     * 根据分类id获取本地分类
+     * @param context
+     * @param id
+     * @return
+     */
+    Category getCategoryById(Context context, String id);
     /**
      * 新增
      * @param context
@@ -27,6 +33,13 @@ public interface LocalDataSource {
      * @param category
      */
     void updateCategory(Context context, Category category);
+
+    /**
+     * 获取本地词汇类别列表
+     * @param context
+     * @return
+     */
+    List<Category> getCategoryList(Context context);
     /**
      * 获取收藏
      * @param context

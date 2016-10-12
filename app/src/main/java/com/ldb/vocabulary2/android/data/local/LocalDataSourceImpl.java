@@ -33,6 +33,22 @@ public class LocalDataSourceImpl implements LocalDataSource{
     }
 
     @Override
+    public Category getCategoryById(Context context, String id) {
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String whereClause = VocabularyContract.CategoryEntry.COLUMN_ID + " = ? ";
+        String[] whereArgs = {id};
+        Cursor cursor = db.query(VocabularyContract.CategoryEntry.TABLE_NAME,
+                VocabularyContract.CategoryEntry.PROJECTION,
+                whereClause, whereArgs, null, null, null);
+        List<Category> categories = getCategoryFrom(cursor);
+        if(!categories.isEmpty()){
+            return categories.get(0);
+        }
+        return null;
+    }
+
+    @Override
     public void addCategory(Context context, Category category){
         ContentValues values = category2ContentValues(category);
 
@@ -52,17 +68,54 @@ public class LocalDataSourceImpl implements LocalDataSource{
     }
     @Override
     public List<Category> getCollectionList(Context context){
-        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        String whereClause = VocabularyContract.CategoryEntry.COLUMN_FAVORITE + " = ? ";
-        String[] whereArgs = {"1"};
+//        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+//        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String selection = VocabularyContract.CategoryEntry.COLUMN_FAVORITE + " = ? ";
+        String[] selectionArgs = {"1"};
         String orderBy = VocabularyContract.CategoryEntry.COLUMN_LAST_READ + " ASC";
-        Cursor cursor = db.query(VocabularyContract.CategoryEntry.TABLE_NAME,
-                VocabularyContract.CategoryEntry.PROJECTION,
-                whereClause, whereArgs, null, null, orderBy);
-        List<Category> categories = getCategoryFrom(cursor);
+//        Cursor cursor = db.query(VocabularyContract.CategoryEntry.TABLE_NAME,
+//                VocabularyContract.CategoryEntry.PROJECTION,
+//                selection, selectionArgs, null, null, orderBy);
+//        List<Category> categories = getCategoryFrom(cursor);
+//        cursor.close();
+
+        List<Category> categories =
+                queryCategory(context, selection, selectionArgs, null, null, orderBy);
         return categories;
     }
+
+    @Override
+    public List<Category> getCategoryList(Context context) {
+        String orderBy = VocabularyContract.CategoryEntry.COLUMN_LAST_READ + " ASC";
+        List<Category> categories =
+                queryCategory(context, null, null, null, null, orderBy);
+        return categories;
+    }
+
+    private List<Category> queryCategory(Context context, String selection, String[] selectionArgs,
+                                         String groupBy, String having,  String orderBy){
+        Cursor cursor = query(context, VocabularyContract.CategoryEntry.TABLE_NAME,
+                VocabularyContract.CategoryEntry.PROJECTION, selection, selectionArgs, groupBy,
+                having, orderBy);
+        List<Category> categories = getCategoryFrom(cursor);
+        cursor.close();
+        return categories;
+    }
+
+    private Cursor query(Context context, String table, String[] columns, String selection,
+                         String[] selectionArgs, String groupBy, String having,
+                         String orderBy){
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy);
+        cursor.moveToFirst();
+        return cursor;
+    }
+
+    private void deleteCollection(){
+
+    }
+
 
     private List<Category> getCategoryFrom(Cursor cursor){
         List<Category> categories = new ArrayList<>();

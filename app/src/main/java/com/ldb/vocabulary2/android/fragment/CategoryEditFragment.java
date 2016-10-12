@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.data.Callback;
 import com.ldb.vocabulary2.android.data.CommunicationContract;
+import com.ldb.vocabulary2.android.data.Constants;
 import com.ldb.vocabulary2.android.data.Repository;
 import com.ldb.vocabulary2.android.model.Category;
 import com.ldb.vocabulary2.android.network.PostParam;
@@ -127,6 +128,9 @@ public class CategoryEditFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id){
+            case android.R.id.home:
+                getActivity().finish();
+                return true;
             case R.id.action_done:
                 save();
                 return true;
@@ -165,37 +169,8 @@ public class CategoryEditFragment extends Fragment {
         repository.saveCategoryLocal(getActivity(), category);
     }
 
-
     private void uploadCategory(final Category category) {
-//        List<PostParam> postParams = new ArrayList<>();
-//        PostParam param = new PostParam();
-//
-//        String categoryName = category.getName();
-//
-//        param.setFile(false);
-//        param.setValue(categoryName);
-//        param.setFieldName(CommunicationContract.KEY_CATEGORY_NAME);
-//        postParams.add(param);
-//
-//        String imagePath = category.getImageLocal();
-//        if(imagePath != null && !imagePath.trim().isEmpty()) {
-//            param = new PostParam();
-//            param.setFile(true);
-//            File image = new File(imagePath);
-//            param.setData(image);
-//            param.setFileName(image.getName());
-//            // TODO 这里需要更好的方法来自动判断文件的mimeType.
-//            param.setMimeType("image/jpeg");
-//            param.setFieldName(CommunicationContract.KEY_CATEGORY_IMAGE);
-//            postParams.add(param);
-//        }
         Repository repository = Repository.getInstance();
-//        repository.postCategory(getActivity(), postParams, new Callback() {
-//            @Override
-//            public void onResult(boolean isOk, String response) {
-//                onUploadCategory(isOk, response);
-//            }
-//        });
         repository.postCategory(getActivity(), category, new Callback.PostCategoryCallback() {
             @Override
             public void onSuccess(String message, Category categoryReturn) {
@@ -227,12 +202,18 @@ public class CategoryEditFragment extends Fragment {
     }
 
     public void onUploadCategory(boolean isOk, String message) {
+        Intent data = new Intent();
         if(isOk){
             // TODO 暂时先显示成功，之后应该弹框询问是增加词汇还是返回主界面
-            showMessage(message);
+//            showMessage(message);
+            data.putExtra(Constants.KEY_CODE, Constants.VALUE_CODE_OK);
         }else {
-            showError(message);
+//            showError(message);
+            data.putExtra(Constants.KEY_CODE, Constants.VALUE_CODE_ERROR);
         }
+        data.putExtra(Constants.KEY_MESSAGE, message);
+        getActivity().setResult(R.id.submit, data);
+        getActivity().finish();
     }
 
     public void showError(String error) {

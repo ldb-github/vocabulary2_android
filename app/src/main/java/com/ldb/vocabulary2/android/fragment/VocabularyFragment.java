@@ -1,17 +1,16 @@
 package com.ldb.vocabulary2.android.fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,15 +18,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.ldb.vocabulary2.android.R;
-import com.ldb.vocabulary2.android.activity.VocabularyActivity;
-import com.ldb.vocabulary2.android.adapter.CategoryAdapter;
 import com.ldb.vocabulary2.android.adapter.VocabularyAdapter;
+import com.ldb.vocabulary2.android.data.Repository;
 import com.ldb.vocabulary2.android.model.Category;
 import com.ldb.vocabulary2.android.model.Vocabulary;
+import com.ldb.vocabulary2.android.util.DateUtil;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -48,6 +46,7 @@ public class VocabularyFragment extends Fragment {
     private List<Vocabulary> mVocabularyList = new ArrayList<>();
     private int mPage;
     private ImageView mCategoryImageView;
+    private FloatingActionButton mFab;
 
     public static VocabularyFragment newInstance(Category category){
         Bundle bundle = new Bundle();
@@ -92,11 +91,18 @@ public class VocabularyFragment extends Fragment {
 
         mCategoryImageView = (ImageView) view.findViewById(R.id.category_image);
 
-        if(mCategory != null){
-            collapsingToolbarLayout.setTitle(mCategory.getName());
-            Picasso.with(getActivity()).load(mCategory.getImage()).into(mCategoryImageView);
-        }
+        collapsingToolbarLayout.setTitle(mCategory.getName());
+        Picasso.with(getActivity()).load(mCategory.getImage()).into(mCategoryImageView);
 
+        mFab = (FloatingActionButton) view.findViewById(R.id.fab);
+        setFab(mCategory.isFavorite());
+
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setFavorite(!mCategory.isFavorite());
+            }
+        });
 
         mVocabularyView = (RecyclerView) view.findViewById(R.id.vocabulary_list);
 //        mVocabularyView.setHasFixedSize(true);
@@ -114,12 +120,32 @@ public class VocabularyFragment extends Fragment {
         mVocabularyView.setAdapter(mAdapter);
     }
 
+    private void setFavorite(boolean favorite){
+        mCategory.setFavorite(favorite);
+        mCategory.setLastRead(DateUtil.getCurrentDate());
+        mCategory.setUploaded(true);
+        Repository repository = Repository.getInstance();
+        repository.saveCategoryLocal(getActivity(), mCategory);
+        setFab(favorite);
+    }
+
+    private void setFab(boolean favorite){
+        if(favorite){
+            mFab.setImageDrawable(ContextCompat
+                    .getDrawable(getActivity(), R.drawable.ic_favorite_white));
+        }else{
+            mFab.setImageDrawable(ContextCompat
+                    .getDrawable(getActivity(), R.drawable.ic_favorite_white_border));
+        }
+    }
+
     public void updateDataSet(List<Vocabulary> vocabularyList) {
         mVocabularyList.addAll(vocabularyList);
         if(mVocabularyView != null) {
             mVocabularyView.getAdapter().notifyDataSetChanged();
         }
     }
+
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

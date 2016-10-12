@@ -2,9 +2,11 @@ package com.ldb.vocabulary2.android.network;
 
 import android.util.Base64;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -37,9 +39,10 @@ public class NetworkRequestByPost {
     private void request(String urlStr, List<PostParam> postParams, BaseNetworkRequest.RequestCallback callback)
             throws IOException {
         DataOutputStream requestData = null;
+        HttpURLConnection urlConnection = null;
         try {
             URL url = new URL(urlStr);
-            HttpURLConnection urlConnection
+            urlConnection
                     = (HttpURLConnection) url.openConnection();
             urlConnection.setUseCaches(false);
             urlConnection.setDoOutput(true);
@@ -103,8 +106,8 @@ public class NetworkRequestByPost {
             // Write boundary indicating end of this post
             requestData.write(("--" + boundary + "--" + CRLF).getBytes(CHARSET));
             requestData.flush();
-            if(urlConnection.getResponseCode() == 200){
-                callback.onResult(true, urlConnection.getResponseMessage());
+            if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK){
+                callback.onResult(true, new String(getUrlBytes(urlConnection)));
             }else{
                 callback.onResult(false, urlConnection.getResponseMessage());
             }
@@ -112,7 +115,22 @@ public class NetworkRequestByPost {
             if(requestData != null){
                 requestData.close();
             }
+            if(urlConnection != null ){
+                urlConnection.disconnect();
+            }
         }
+    }
+
+    public byte[] getUrlBytes(HttpURLConnection connection) throws IOException{
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            InputStream in = connection.getInputStream();
+            int bytesRead = 0;
+            byte[] buffer = new byte[1024];
+            while((bytesRead = in.read(buffer)) > 0){
+                out.write(buffer, 0, bytesRead);
+            }
+            out.close();
+            return out.toByteArray();
     }
 
 //    for(PostParam postParam : postParams) {

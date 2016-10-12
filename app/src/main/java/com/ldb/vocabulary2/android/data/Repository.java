@@ -20,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,43 +47,50 @@ public class Repository {
         return INSTANCE;
     }
 
-    public void postCategory(@NonNull final Context context, List<PostParam> category,
-                             final Callback callback){
-        if (!DeviceUtil.isNetworkConnected(context)) {
-            callback.onResult(false, context.getResources().getString(R.string.network_not_connected));
-        }else {
-            mRemoteDataSource.postCategory(context, category, new BaseNetworkRequest.RequestCallback() {
-                @Override
-                public void onResult(boolean isOk, String response) {
-                    if(isOk){
-                        try {
-                            JSONObject result = new JSONObject(response);
-                            int code = result.getInt(CommunicationContract.KEY_CODE);
-                            String message = result.getString(CommunicationContract.KEY_MESSAGE);
-                            if(code == CommunicationContract.VALUE_CODE_OK){
-                                callback.onResult(true, message);
-                            }else{
-                                callback.onResult(false, message);
-                            }
-                        }catch (JSONException e){
-                            callback.onResult(false,
-                                    context.getResources().getString(R.string.parse_data_error));
-                        }
-                    }else{
-                        callback.onResult(false, response);
-                    }
-                }
-            });
-        }
-    }
-
-
+//    public void postCategory(@NonNull final Context context, List<PostParam> category,
+//                             final Callback callback){
+//        if (!DeviceUtil.isNetworkConnected(context)) {
+//            callback.onResult(false, context.getResources().getString(R.string.network_not_connected));
+//        }else {
+//            mRemoteDataSource.postCategory(context, category, new BaseNetworkRequest.RequestCallback() {
+//                @Override
+//                public void onResult(boolean isOk, String response) {
+//                    if(isOk){
+//                        try {
+//                            JSONObject result = new JSONObject(response);
+//                            int code = result.getInt(CommunicationContract.KEY_CODE);
+//                            String message = result.getString(CommunicationContract.KEY_MESSAGE);
+//                            if(code == CommunicationContract.VALUE_CODE_OK){
+//                                callback.onResult(true, message);
+//                            }else{
+//                                callback.onResult(false, message);
+//                            }
+//                        }catch (JSONException e){
+//                            callback.onResult(false,
+//                                    context.getResources().getString(R.string.parse_data_error));
+//                        }
+//                    }else{
+//                        callback.onResult(false, response);
+//                    }
+//                }
+//            });
+//        }
+//    }
 
     public void saveCategoryLocal(Context context, Category category){
         if(category.getLocalId() != null && !category.getLocalId().trim().isEmpty()){
             mLocalDataSource.updateCategory(context, category);
         }else{
-            mLocalDataSource.addCategory(context, category);
+            Category newCategory = null;
+            if(category.getId() != null && !category.getId().trim().isEmpty() ){
+                newCategory = mLocalDataSource.getCategoryById(context, category.getId());
+            }
+            if(newCategory != null ){
+                category.setLocalId(newCategory.getLocalId());
+                mLocalDataSource.updateCategory(context, category);
+            }else {
+                mLocalDataSource.addCategory(context, category);
+            }
         }
     }
 
@@ -99,12 +107,20 @@ public class Repository {
                         try {
                             JSONObject result = new JSONObject(response);
                             int code = result.getInt(CommunicationContract.KEY_CODE);
-                            String message = result.getString(CommunicationContract.KEY_MESSAGE);
+                            StringBuilder message = new StringBuilder(result.getString(CommunicationContract.KEY_MESSAGE));
                             if(code == CommunicationContract.VALUE_CODE_OK){
                                 Category categoryReturn = new Category();
-                                callback.onSuccess(message, categoryReturn);
+                                if(result.has(CommunicationContract.KEY_CATEGORY_LIST)) {
+                                    try{
+                                        categoryReturn = getCategoryFrom(result.getJSONObject(CommunicationContract.KEY_CATEGORY_LIST));
+                                    } catch (ParseException e) {
+                                        message.append(context.getResources()
+                                                .getString(R.string.parse_category_create_time_error));
+                                    }
+                                }
+                                callback.onSuccess(message.toString(), categoryReturn);
                             }else{
-                                callback.onError( message);
+                                callback.onError( message.toString());
                             }
                         }catch (JSONException e){
                             callback.onError(
@@ -176,47 +192,13 @@ public class Repository {
                                             CommunicationContract.KEY_CATEGORY_LIST);
                                     JSONObject jsonObject = new JSONObject();
                                     for (int i = 0; i < categoryArray.length(); i++) {
-                                        jsonObject = categoryArray.getJSONObject(i);
-                                        Category category = new Category();
-                                        category.setId(jsonObject.getString(
-                                                CommunicationContract.KEY_CATEGORY_ID));
-                                        category.setName(jsonObject.getString(
-                                                CommunicationContract.KEY_CATEGORY_NAME));
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_IMAGE)) {
-                                            category.setImage(jsonObject.getString(
-                                                    CommunicationContract.KEY_CATEGORY_IMAGE));
+                                        try {
+                                            Category category = getCategoryFrom(categoryArray.getJSONObject(i));
+                                            categoryList.add(category);
+                                        } catch (ParseException e) {
+                                            message.append(context.getResources()
+                                                    .getString(R.string.parse_category_create_time_error));
                                         }
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_IMAGE_REMOTE)) {
-                                            category.setImageRemote(jsonObject.getString(
-                                                    CommunicationContract.KEY_CATEGORY_IMAGE_REMOTE));
-                                        }
-                                        category.setFavoriteCount(jsonObject.getInt(
-                                                CommunicationContract.KEY_CATEGORY_FAVORITE_COUNT));
-                                        category.setWordCount(jsonObject.getInt(
-                                                CommunicationContract.KEY_CATEGORY_WORD_COUNT));
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_LANGUAGE)) {
-                                            category.setLanguage(jsonObject.getString(
-                                                    CommunicationContract.KEY_CATEGORY_LANGUAGE));
-                                        }
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_CREATER)) {
-                                            category.setUsername(jsonObject.getString(
-                                                    CommunicationContract.KEY_CATEGORY_CREATER));
-                                        }
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_CREATE_TIME)) {
-                                            try {
-                                                category.setCreateTime(
-                                                        DateUtil.parseDateTime(jsonObject.getString(
-                                                                CommunicationContract.KEY_CATEGORY_CREATE_TIME)));
-                                            } catch (ParseException e) {
-                                                message.append(context.getResources()
-                                                        .getString(R.string.parse_category_create_time_error));
-                                            }
-                                        }
-                                        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_TRANSLATION)) {
-                                            category.setTranslation(jsonObject.getString(
-                                                    CommunicationContract.KEY_CATEGORY_TRANSLATION));
-                                        }
-                                        categoryList.add(category);
                                     }
                                 }
                             }
@@ -296,6 +278,50 @@ public class Repository {
                 }
             });
         }
+    }
+
+    private Category getCategoryFrom(JSONObject jsonObject) throws JSONException, ParseException{
+        Category category = new Category();
+        category.setId(jsonObject.getString(
+                CommunicationContract.KEY_CATEGORY_ID));
+        category.setName(jsonObject.getString(
+                CommunicationContract.KEY_CATEGORY_NAME));
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_IMAGE)) {
+            category.setImage(jsonObject.getString(
+                    CommunicationContract.KEY_CATEGORY_IMAGE));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_IMAGE_REMOTE)) {
+            category.setImageRemote(jsonObject.getString(
+                    CommunicationContract.KEY_CATEGORY_IMAGE_REMOTE));
+        }
+        category.setFavoriteCount(jsonObject.getInt(
+                CommunicationContract.KEY_CATEGORY_FAVORITE_COUNT));
+        category.setWordCount(jsonObject.getInt(
+                CommunicationContract.KEY_CATEGORY_WORD_COUNT));
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_LANGUAGE)) {
+            category.setLanguage(jsonObject.getString(
+                    CommunicationContract.KEY_CATEGORY_LANGUAGE));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_CREATER)) {
+            category.setUsername(jsonObject.getString(
+                    CommunicationContract.KEY_CATEGORY_CREATER));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_CREATE_TIME)) {
+//            try {
+                category.setCreateTime(
+                        DateUtil.parseDateTime(jsonObject.getString(
+                                CommunicationContract.KEY_CATEGORY_CREATE_TIME)));
+//            } catch (ParseException e) {
+//                message.append(context.getResources()
+//                        .getString(R.string.parse_category_create_time_error));
+//            }
+        }
+        if(jsonObject.has(CommunicationContract.KEY_CATEGORY_TRANSLATION)) {
+            category.setTranslation(jsonObject.getString(
+                    CommunicationContract.KEY_CATEGORY_TRANSLATION));
+        }
+
+        return category;
     }
 
 }

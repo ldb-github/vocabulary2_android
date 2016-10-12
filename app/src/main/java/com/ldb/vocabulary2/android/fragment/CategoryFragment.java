@@ -1,5 +1,6 @@
 package com.ldb.vocabulary2.android.fragment;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -19,6 +20,7 @@ import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.activity.CategoryEditActivity;
 import com.ldb.vocabulary2.android.activity.VocabularyActivity;
 import com.ldb.vocabulary2.android.adapter.CategoryAdapter;
+import com.ldb.vocabulary2.android.data.Constants;
 
 /**
  * Created by lsp on 2016/10/7.
@@ -79,6 +81,21 @@ public class CategoryFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == Constants.REQUEST_CATEGORY_ADD && resultCode == R.id.submit){
+            int code = data.getIntExtra(Constants.KEY_CODE, -1);
+            String message = data.getStringExtra(Constants.KEY_MESSAGE);
+            if(code == Constants.VALUE_CODE_OK){
+                // TODO 刷新界面
+                showMessage(message);
+            }else{
+                // TODO
+                showError(message);
+            }
+        }
+    }
+
     private void refresh() {
         if(mAdapter != null) {
             mAdapter.refresh(new CategoryAdapter.OnLoadCategoryCallback() {
@@ -116,6 +133,11 @@ public class CategoryFragment extends Fragment {
             }
         });
         mCategoryRecycler.setAdapter(mAdapter);
+    }
+
+    private void showMessage(String message){
+        Snackbar.make(getView().findViewById(R.id.snack_bar_decor),
+                message, Snackbar.LENGTH_SHORT).show();
     }
 
     private void showError(String error){
