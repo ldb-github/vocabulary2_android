@@ -20,12 +20,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 数据请求入口
  * Created by lsp on 2016/10/7.
  */
 public class Repository {
@@ -47,36 +47,11 @@ public class Repository {
         return INSTANCE;
     }
 
-//    public void postCategory(@NonNull final Context context, List<PostParam> category,
-//                             final Callback callback){
-//        if (!DeviceUtil.isNetworkConnected(context)) {
-//            callback.onResult(false, context.getResources().getString(R.string.network_not_connected));
-//        }else {
-//            mRemoteDataSource.postCategory(context, category, new BaseNetworkRequest.RequestCallback() {
-//                @Override
-//                public void onResult(boolean isOk, String response) {
-//                    if(isOk){
-//                        try {
-//                            JSONObject result = new JSONObject(response);
-//                            int code = result.getInt(CommunicationContract.KEY_CODE);
-//                            String message = result.getString(CommunicationContract.KEY_MESSAGE);
-//                            if(code == CommunicationContract.VALUE_CODE_OK){
-//                                callback.onResult(true, message);
-//                            }else{
-//                                callback.onResult(false, message);
-//                            }
-//                        }catch (JSONException e){
-//                            callback.onResult(false,
-//                                    context.getResources().getString(R.string.parse_data_error));
-//                        }
-//                    }else{
-//                        callback.onResult(false, response);
-//                    }
-//                }
-//            });
-//        }
-//    }
-
+    /**
+     * 保存词汇分类信息到本地
+     * @param context
+     * @param category
+     */
     public void saveCategoryLocal(Context context, Category category){
         if(category.getLocalId() != null && !category.getLocalId().trim().isEmpty()){
             mLocalDataSource.updateCategory(context, category);
@@ -94,13 +69,30 @@ public class Repository {
         }
     }
 
+    /**
+     * 删除收藏
+     * @param context
+     * @param ids 本地id
+     * @return
+     */
+    public int deleteCollections(Context context, List<String> ids){
+        return mLocalDataSource.deleteCollections(context, ids);
+    }
+
+    /**
+     * 提交词汇分类到服务器
+     * @param context
+     * @param category
+     * @param callback
+     */
     public void postCategory(@NonNull final Context context, final Category category,
                              final Callback.PostCategoryCallback callback){
         if (!DeviceUtil.isNetworkConnected(context)) {
             callback.onError( context.getResources().getString(R.string.network_not_connected));
         }else {
             List<PostParam> postParams = getPostParamFrom(category);
-            mRemoteDataSource.postCategory(context, postParams, new BaseNetworkRequest.RequestCallback() {
+            mRemoteDataSource.postCategory(context, postParams,
+                    new BaseNetworkRequest.RequestCallback() {
                 @Override
                 public void onResult(boolean isOk, String response) {
                     if(isOk){
@@ -115,7 +107,7 @@ public class Repository {
                                         categoryReturn = getCategoryFrom(result.getJSONObject(CommunicationContract.KEY_CATEGORY_LIST));
                                     } catch (ParseException e) {
                                         message.append(context.getResources()
-                                                .getString(R.string.parse_category_create_time_error));
+                                                .getString(R.string.parse_create_time_error));
                                     }
                                 }
                                 callback.onSuccess(message.toString(), categoryReturn);
@@ -134,16 +126,26 @@ public class Repository {
         }
     }
 
+    /**
+     * 根据词汇分类信息生成提交参数
+     * @param category
+     * @return
+     */
     public List<PostParam> getPostParamFrom(Category category){
         List<PostParam> postParams = new ArrayList<>();
 
-        PostParam param = new PostParam();
+        PostParam param;
 
-        String categoryName = category.getName();
-
+        param = new PostParam();
         param.setFile(false);
-        param.setValue(categoryName);
+        param.setValue(category.getName());
         param.setFieldName(CommunicationContract.KEY_CATEGORY_NAME);
+        postParams.add(param);
+
+        param = new PostParam();
+        param.setFile(false);
+        param.setValue(category.getTranslation());
+        param.setFieldName(CommunicationContract.KEY_CATEGORY_TRANSLATION);
         postParams.add(param);
 
         String imagePath = category.getImageLocal();
@@ -163,7 +165,7 @@ public class Repository {
     }
 
     /**
-     * 获取词汇列表
+     * 获取词汇分类列表
      * @param context
      * @param page
      * @param sort
@@ -194,10 +196,11 @@ public class Repository {
                                     for (int i = 0; i < categoryArray.length(); i++) {
                                         try {
                                             Category category = getCategoryFrom(categoryArray.getJSONObject(i));
+                                            category.setUploaded(true);
                                             categoryList.add(category);
                                         } catch (ParseException e) {
                                             message.append(context.getResources()
-                                                    .getString(R.string.parse_category_create_time_error));
+                                                    .getString(R.string.parse_create_time_error));
                                         }
                                     }
                                 }
@@ -220,66 +223,13 @@ public class Repository {
         }
     }
 
-    public List<Category> getCollectionList(Context context){
-        return  mLocalDataSource.getCollectionList(context);
-    }
-
-    public void getVocabularyList(@NonNull final Context context, String categoryId, int page,
-                                  String secondLan, final Callback.RequestVocabularyListCallback callback){
-        if (!DeviceUtil.isNetworkConnected(context)) {
-            callback.onError(context.getResources().getString(R.string.network_not_connected));
-        }else {
-            mRemoteDataSource.getVocabularyList(context, categoryId, page, secondLan,
-                    new BaseNetworkRequest.RequestCallback() {
-                @Override
-                public void onResult(boolean isOk, String response) {
-                    if(isOk){
-                        try {
-                            JSONObject result = new JSONObject(response);
-                            int code = result.getInt(CommunicationContract.KEY_CODE);
-                            StringBuilder message = new StringBuilder(
-                                    result.getString(CommunicationContract.KEY_MESSAGE));
-                            List<Vocabulary> vocabularyList = new ArrayList<Vocabulary>();
-                            if(code == CommunicationContract.VALUE_CODE_OK){
-                                if(result.has(CommunicationContract.KEY_VOCABULARY_LIST)) {
-                                    JSONArray categoryArray = result.getJSONArray(
-                                            CommunicationContract.KEY_VOCABULARY_LIST);
-                                    JSONObject jsonObject = new JSONObject();
-
-                                    for (int i = 0; i < categoryArray.length(); i++) {
-                                        jsonObject = categoryArray.getJSONObject(i);
-                                        Vocabulary vocabulary = new Vocabulary();
-                                        vocabulary.setId(jsonObject.getString(
-                                                CommunicationContract.KEY_VOCABULARY_ID));
-                                        vocabulary.setName(jsonObject.getString(
-                                                CommunicationContract.KEY_VOCABULARY_NAME));
-                                        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_IMAGE)) {
-                                            vocabulary.setImage(jsonObject.getString(
-                                                    CommunicationContract.KEY_VOCABULARY_IMAGE));
-                                        }
-                                        ;
-                                        vocabularyList.add(vocabulary);
-                                    }
-                                }
-                            }
-                            if(code == CommunicationContract.VALUE_CODE_OK){
-                                callback.onSuccess(message.toString(), vocabularyList);
-                            }else{
-                                callback.onError(message.toString());
-                            }
-                        } catch (JSONException e) {
-                            callback.onError(
-                                    context.getResources().getString(R.string.parse_data_error));
-                        }
-
-                    }else {
-                        callback.onError(context.getResources().getString(R.string.request_error));
-                    }
-                }
-            });
-        }
-    }
-
+    /**
+     * 解析Json生成Category
+     * @param jsonObject
+     * @return
+     * @throws JSONException
+     * @throws ParseException
+     */
     private Category getCategoryFrom(JSONObject jsonObject) throws JSONException, ParseException{
         Category category = new Category();
         category.setId(jsonObject.getString(
@@ -307,14 +257,9 @@ public class Repository {
                     CommunicationContract.KEY_CATEGORY_CREATER));
         }
         if(jsonObject.has(CommunicationContract.KEY_CATEGORY_CREATE_TIME)) {
-//            try {
-                category.setCreateTime(
-                        DateUtil.parseDateTime(jsonObject.getString(
-                                CommunicationContract.KEY_CATEGORY_CREATE_TIME)));
-//            } catch (ParseException e) {
-//                message.append(context.getResources()
-//                        .getString(R.string.parse_category_create_time_error));
-//            }
+            category.setCreateTime(
+                    DateUtil.parseDateTime(jsonObject.getString(
+                            CommunicationContract.KEY_CATEGORY_CREATE_TIME)));
         }
         if(jsonObject.has(CommunicationContract.KEY_CATEGORY_TRANSLATION)) {
             category.setTranslation(jsonObject.getString(
@@ -323,5 +268,236 @@ public class Repository {
 
         return category;
     }
+
+    /**
+     * 获取收藏的词汇分类
+     * @param context
+     * @return
+     */
+    public List<Category> getCollectionList(Context context){
+        return  mLocalDataSource.getCollectionList(context);
+    }
+
+    /**
+     * 保存词汇信息到本地
+     * @param context
+     * @param vocabulary
+     */
+    public void saveVocabularyLocal(Context context, Vocabulary vocabulary){
+        if(vocabulary.getLocalId() != null && !vocabulary.getLocalId().trim().isEmpty()){
+            mLocalDataSource.updateVocabulary(context, vocabulary);
+        }else{
+            Vocabulary newVocabulary = null;
+            if(vocabulary.getId() != null && !vocabulary.getId().trim().isEmpty() ){
+                newVocabulary = mLocalDataSource.getVocabularyById(context, vocabulary.getId());
+            }
+            if(newVocabulary != null ){
+                vocabulary.setLocalId(newVocabulary.getLocalId());
+                mLocalDataSource.updateVocabulary(context, vocabulary);
+            }else {
+                mLocalDataSource.addVocabulary(context, vocabulary);
+            }
+        }
+    }
+
+    /**
+     * 提交词汇到服务器
+     * @param context
+     * @param vocabulary
+     * @param callback
+     */
+    public void postVocabulary(@NonNull final Context context, Vocabulary vocabulary,
+                               final Callback.PostVocabularyCallback callback){
+        if (!DeviceUtil.isNetworkConnected(context)) {
+            callback.onError(context.getResources().getString(R.string.network_not_connected));
+        }else {
+            List<PostParam> postParams = getPostParamFrom(vocabulary);
+            mRemoteDataSource.postVocabulary(context, postParams,
+                    new BaseNetworkRequest.RequestCallback() {
+                @Override
+                public void onResult(boolean isOk, String response) {
+                    if(isOk){
+                        try {
+                            JSONObject result = new JSONObject(response);
+                            int code = result.getInt(CommunicationContract.KEY_CODE);
+                            StringBuilder message = new StringBuilder(
+                                    result.getString(CommunicationContract.KEY_MESSAGE));
+                            if(code == CommunicationContract.VALUE_CODE_OK){
+                                Vocabulary vocabularyReturn = new Vocabulary();
+                                if(result.has(CommunicationContract.KEY_VOCABULARY_LIST)) {
+                                    JSONObject jsonObject = result.getJSONObject(
+                                            CommunicationContract.KEY_VOCABULARY_LIST);
+                                        try {
+                                            vocabularyReturn = getVocabularyFrom(jsonObject);
+                                        } catch (ParseException e) {
+                                            message.append(context.getResources()
+                                                    .getString(R.string.parse_create_time_error));
+                                        }
+                                    }
+                                callback.onSuccess(message.toString(), vocabularyReturn);
+                            }else{
+                                callback.onError(message.toString());
+                            }
+                        } catch (JSONException e) {
+                            callback.onError(
+                                    context.getResources().getString(R.string.parse_data_error));
+                        }
+                    }else {
+                        callback.onError(context.getResources().getString(R.string.request_error));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 根据词汇信息生成提交参数
+     * @param vocabulary
+     * @return
+     */
+    public List<PostParam> getPostParamFrom(Vocabulary vocabulary){
+        List<PostParam> postParams = new ArrayList<>();
+
+        PostParam param;
+
+        param = new PostParam();
+        param.setFile(false);
+        param.setValue(vocabulary.getName());
+        param.setFieldName(CommunicationContract.KEY_VOCABULARY_NAME);
+        postParams.add(param);
+
+        param = new PostParam();
+        param.setFile(false);
+        param.setValue(vocabulary.getTranslation());
+        param.setFieldName(CommunicationContract.KEY_VOCABULARY_TRANSLATION);
+        postParams.add(param);
+
+        String imagePath = vocabulary.getImageLocal();
+        if(imagePath != null && !imagePath.trim().isEmpty()) {
+            param = new PostParam();
+            param.setFile(true);
+            File image = new File(imagePath);
+            param.setData(image);
+            param.setFileName(image.getName());
+            // TODO 这里需要更好的方法来自动判断文件的mimeType.
+            param.setMimeType("image/jpeg");
+            param.setFieldName(CommunicationContract.KEY_VOCABULARY_IMAGE);
+            postParams.add(param);
+        }
+
+        return postParams;
+    }
+
+    /**
+     * 从服务器获取词汇信息
+     * @param context
+     * @param categoryId
+     * @param page
+     * @param secondLan
+     * @param callback
+     */
+    public void getVocabularyList(@NonNull final Context context, String categoryId, int page,
+                                  String secondLan, final Callback.RequestVocabularyListCallback callback){
+        if (!DeviceUtil.isNetworkConnected(context)) {
+            callback.onError(context.getResources().getString(R.string.network_not_connected));
+        }else {
+            mRemoteDataSource.getVocabularyList(context, categoryId, page, secondLan,
+                    new BaseNetworkRequest.RequestCallback() {
+                @Override
+                public void onResult(boolean isOk, String response) {
+                    if(isOk){
+                        try {
+                            JSONObject result = new JSONObject(response);
+                            int code = result.getInt(CommunicationContract.KEY_CODE);
+                            StringBuilder message = new StringBuilder(
+                                    result.getString(CommunicationContract.KEY_MESSAGE));
+                            List<Vocabulary> vocabularyList = new ArrayList<Vocabulary>();
+                            if(code == CommunicationContract.VALUE_CODE_OK){
+                                if(result.has(CommunicationContract.KEY_VOCABULARY_LIST)) {
+                                    JSONArray categoryArray = result.getJSONArray(
+                                            CommunicationContract.KEY_VOCABULARY_LIST);
+                                    JSONObject jsonObject = new JSONObject();
+
+                                    for (int i = 0; i < categoryArray.length(); i++) {
+                                        jsonObject = categoryArray.getJSONObject(i);
+                                        Vocabulary vocabulary = new Vocabulary();
+                                        try {
+                                            vocabulary = getVocabularyFrom(jsonObject);
+                                        } catch (ParseException e) {
+                                            message.append(context.getResources()
+                                                    .getString(R.string.parse_create_time_error));
+                                        }
+//                                        vocabulary.setId(jsonObject.getString(
+//                                                CommunicationContract.KEY_VOCABULARY_ID));
+//                                        vocabulary.setName(jsonObject.getString(
+//                                                CommunicationContract.KEY_VOCABULARY_NAME));
+//                                        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_IMAGE)) {
+//                                            vocabulary.setImage(jsonObject.getString(
+//                                                    CommunicationContract.KEY_VOCABULARY_IMAGE));
+//                                        }
+                                        vocabularyList.add(vocabulary);
+                                    }
+                                }
+                                callback.onSuccess(message.toString(), vocabularyList);
+                            }else{
+                                callback.onError(message.toString());
+                            }
+                        } catch (JSONException e) {
+                            callback.onError(
+                                    context.getResources().getString(R.string.parse_data_error));
+                        }
+
+                    }else {
+                        callback.onError(context.getResources().getString(R.string.request_error));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * 解析Json生成Vocabulary
+     * @param jsonObject
+     * @return
+     * @throws JSONException
+     * @throws ParseException
+     */
+    private Vocabulary getVocabularyFrom(JSONObject jsonObject) throws JSONException, ParseException{
+        Vocabulary vocabulary = new Vocabulary();
+        vocabulary.setId(jsonObject.getString(
+                CommunicationContract.KEY_VOCABULARY_ID));
+        vocabulary.setName(jsonObject.getString(
+                CommunicationContract.KEY_VOCABULARY_NAME));
+        vocabulary.setCId(jsonObject.getString(
+                CommunicationContract.KEY_CATEGORY_ID));
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_IMAGE)) {
+            vocabulary.setImage(jsonObject.getString(
+                    CommunicationContract.KEY_VOCABULARY_IMAGE));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_IMAGE_REMOTE)) {
+            vocabulary.setImageRemote(jsonObject.getString(
+                    CommunicationContract.KEY_VOCABULARY_IMAGE_REMOTE));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_LANGUAGE)) {
+            vocabulary.setLanguage(jsonObject.getString(
+                    CommunicationContract.KEY_VOCABULARY_LANGUAGE));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_CREATER)) {
+            vocabulary.setUsername(jsonObject.getString(
+                    CommunicationContract.KEY_VOCABULARY_CREATER));
+        }
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_CREATE_TIME)) {
+            vocabulary.setCreateTime(
+                    DateUtil.parseDateTime(jsonObject.getString(
+                            CommunicationContract.KEY_VOCABULARY_CREATE_TIME)));
+
+        }
+        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_TRANSLATION)) {
+            vocabulary.setTranslation(jsonObject.getString(
+                    CommunicationContract.KEY_VOCABULARY_TRANSLATION));
+        }
+        return vocabulary;
+    }
+
 
 }

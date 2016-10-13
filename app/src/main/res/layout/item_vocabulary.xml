@@ -2,7 +2,8 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="@dimen/avatar_text_icon_title_height"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/spacing_normal">
 
 
@@ -18,5 +19,24 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/vocabulary_image"
         android:text="vocabularyName"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/vocabulary_image"
+        android:layout_alignParentRight="true">
+
+        <ImageButton
+            android:id="@+id/card_upload"
+            android:layout_width="@dimen/cards_button_width"
+            android:layout_height="@dimen/cards_button_width"
+            android:layout_marginTop="@dimen/spacing_double"
+            android:layout_marginBottom="@dimen/spacing_normal"
+            android:layout_alignParentBottom="true"
+            android:layout_toLeftOf="@id/card_favorite"
+            app:srcCompat="@drawable/ic_cloud_upload"
+            style="?android:attr/borderlessButtonStyle"/>
+
+    </LinearLayout>
 
 </RelativeLayout>

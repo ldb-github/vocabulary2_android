@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.ldb.vocabulary2.android.data.remote.RemoteDataSourceImpl;
 import com.ldb.vocabulary2.android.model.Category;
+import com.ldb.vocabulary2.android.model.Vocabulary;
 import com.ldb.vocabulary2.android.network.BaseNetworkRequest;
 import com.ldb.vocabulary2.android.network.NetworkRequestViaVolley;
 
@@ -24,7 +25,6 @@ public class LocalDataSourceImpl implements LocalDataSource{
     private LocalDataSourceImpl(){
 
     }
-
     public static LocalDataSourceImpl getInstance(){
         if(INSTANCE == null){
             INSTANCE = new LocalDataSourceImpl();
@@ -32,39 +32,41 @@ public class LocalDataSourceImpl implements LocalDataSource{
         return INSTANCE;
     }
 
+    //region Category
     @Override
     public Category getCategoryById(Context context, String id) {
-        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String whereClause = VocabularyContract.CategoryEntry.COLUMN_ID + " = ? ";
-        String[] whereArgs = {id};
-        Cursor cursor = db.query(VocabularyContract.CategoryEntry.TABLE_NAME,
-                VocabularyContract.CategoryEntry.PROJECTION,
-                whereClause, whereArgs, null, null, null);
-        List<Category> categories = getCategoryFrom(cursor);
+//        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+//        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String selection = VocabularyContract.CategoryEntry.COLUMN_ID + " = ? ";
+        String[] selectionArgs = {id};
+//        Cursor cursor = db.query(VocabularyContract.CategoryEntry.TABLE_NAME,
+//                VocabularyContract.CategoryEntry.PROJECTION,
+//                whereClause, whereArgs, null, null, null);
+        List<Category> categories = queryCategory(context, selection, selectionArgs, null, null, null);
+
         if(!categories.isEmpty()){
             return categories.get(0);
         }
         return null;
     }
-
     @Override
     public void addCategory(Context context, Category category){
         ContentValues values = category2ContentValues(category);
-
-        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.insert(VocabularyContract.CategoryEntry.TABLE_NAME, null, values);
+        insert(context, VocabularyContract.CategoryEntry.TABLE_NAME, null, values);
+//        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+//        SQLiteDatabase db = dbHelper.getWritableDatabase();
+//        db.insert(VocabularyContract.CategoryEntry.TABLE_NAME, null, values);
     }
     @Override
     public void updateCategory(Context context, Category category){
         ContentValues values = category2ContentValues(category);
 
-        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+//        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+//        SQLiteDatabase db = dbHelper.getWritableDatabase();
         String whereClause = VocabularyContract.CategoryEntry._ID + " = ? ";
         String[] whereArgs = {category.getLocalId()};
-        db.update(VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
+        update(context, VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
+//        db.update(VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
     }
     @Override
     public List<Category> getCollectionList(Context context){
@@ -83,7 +85,6 @@ public class LocalDataSourceImpl implements LocalDataSource{
                 queryCategory(context, selection, selectionArgs, null, null, orderBy);
         return categories;
     }
-
     @Override
     public List<Category> getCategoryList(Context context) {
         String orderBy = VocabularyContract.CategoryEntry.COLUMN_LAST_READ + " ASC";
@@ -91,7 +92,30 @@ public class LocalDataSourceImpl implements LocalDataSource{
                 queryCategory(context, null, null, null, null, orderBy);
         return categories;
     }
+    @Override
+    public int deleteCollections(Context context, List<String> ids){
+        StringBuilder sb = new StringBuilder();
+        for(String id : ids){
+            sb.append(id).append(",");
+        }
+        if(sb.length() > 0){
+            sb.delete(sb.lastIndexOf(","), sb.length());
+        }
+        String whereClause = VocabularyContract.CategoryEntry._ID +  " in ( ? )";
+        String[] whereArgs = { sb.toString() };
+        return deleteCategory(context, whereClause, whereArgs);
+    }
 
+    /**
+     * 词汇分类查询
+     * @param context
+     * @param selection
+     * @param selectionArgs
+     * @param groupBy
+     * @param having
+     * @param orderBy
+     * @return
+     */
     private List<Category> queryCategory(Context context, String selection, String[] selectionArgs,
                                          String groupBy, String having,  String orderBy){
         Cursor cursor = query(context, VocabularyContract.CategoryEntry.TABLE_NAME,
@@ -101,22 +125,23 @@ public class LocalDataSourceImpl implements LocalDataSource{
         cursor.close();
         return categories;
     }
-
-    private Cursor query(Context context, String table, String[] columns, String selection,
-                         String[] selectionArgs, String groupBy, String having,
-                         String orderBy){
-        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy);
-        cursor.moveToFirst();
-        return cursor;
+    /**
+     * 删除词汇分类
+     * @param context
+     * @param whereClause
+     * @param whereArgs
+     * @return
+     */
+    private int deleteCategory(Context context, String whereClause, String[] whereArgs){
+//        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+//        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return delete(context, VocabularyContract.CategoryEntry.TABLE_NAME, whereClause, whereArgs);
     }
-
-    private void deleteCollection(){
-
-    }
-
-
+    /**
+     * 从Cursor中提取Category
+     * @param cursor
+     * @return
+     */
     private List<Category> getCategoryFrom(Cursor cursor){
         List<Category> categories = new ArrayList<>();
         if(cursor.moveToFirst()){
@@ -159,7 +184,11 @@ public class LocalDataSourceImpl implements LocalDataSource{
         }
         return categories;
     }
-
+    /**
+     * Category转换成ContentValues
+     * @param category
+     * @return
+     */
     private ContentValues category2ContentValues(Category category){
         ContentValues values = new ContentValues();
         values.put(VocabularyContract.CategoryEntry.COLUMN_ID, category.getId());
@@ -177,6 +206,201 @@ public class LocalDataSourceImpl implements LocalDataSource{
         values.put(VocabularyContract.CategoryEntry.COLUMN_FAVORITE, category.isFavorite() ? 1 : 0);
         values.put(VocabularyContract.CategoryEntry.COLUMN_LAST_READ, category.getLastRead().getTime());
         values.put(VocabularyContract.CategoryEntry.COLUMN_HAS_NEW, category.isHasNew() ? 1 : 0);
+        if(category.getLocalId() != null){
+            values.put(VocabularyContract.CategoryEntry._ID, category.getLocalId());
+        }
         return values;
     }
+    //endregion
+
+    //region Vocabulary
+    @Override
+    public Vocabulary getVocabularyById(Context context, String id) {
+        String selection = VocabularyContract.VocabularyEntry.COLUMN_ID + " = ? ";
+        String[] selectionArgs = {id};
+        List<Vocabulary> vocabularies = queryVocabulary(context, selection, selectionArgs, null, null, null);
+        if(!vocabularies.isEmpty()){
+            return vocabularies.get(0);
+        }
+        return null;
+    }
+    @Override
+    public void addVocabulary(Context context, Vocabulary vocabulary) {
+        ContentValues values = vocabulary2ContentValues(vocabulary);
+        insert(context, VocabularyContract.VocabularyEntry.TABLE_NAME, null, values);
+    }
+    @Override
+    public void updateVocabulary(Context context, Vocabulary vocabulary) {
+        ContentValues values = vocabulary2ContentValues(vocabulary);
+        String whereClause = VocabularyContract.VocabularyEntry._ID + " = ? ";
+        String[] whereArgs = {vocabulary.getLocalId()};
+        update(context, VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
+    }
+    @Override
+    public int deleteVocabularies(Context context, List<String> ids) {
+        StringBuilder sb = new StringBuilder();
+        for(String id : ids){
+            sb.append(id).append(",");
+        }
+        if(sb.length() > 0){
+            sb.delete(sb.lastIndexOf(","), sb.length());
+        }
+        String whereClause = VocabularyContract.VocabularyEntry._ID +  " in ( ? )";
+        String[] whereArgs = { sb.toString() };
+        return deleteVocabulary(context, whereClause, whereArgs);
+    }
+
+    /**
+     * 词汇查询
+     * @param context
+     * @param selection
+     * @param selectionArgs
+     * @param groupBy
+     * @param having
+     * @param orderBy
+     * @return
+     */
+    private List<Vocabulary> queryVocabulary(Context context, String selection, String[] selectionArgs,
+                                             String groupBy, String having,  String orderBy){
+        Cursor cursor = query(context, VocabularyContract.VocabularyEntry.TABLE_NAME,
+                VocabularyContract.VocabularyEntry.PROJECTION, selection, selectionArgs, groupBy,
+                having, orderBy);
+        List<Vocabulary> vocabularies = getVocabularyFrom(cursor);
+        cursor.close();
+        return vocabularies;
+    }
+    /**
+     * 删除词汇
+     * @param context
+     * @param whereClause
+     * @param whereArgs
+     * @return
+     */
+    private int deleteVocabulary(Context context, String whereClause, String[] whereArgs){
+        return delete(context, VocabularyContract.VocabularyEntry.TABLE_NAME, whereClause, whereArgs);
+    }
+    /**
+     * 从Cursor提取Vocabulary
+     * @param cursor
+     * @return
+     */
+    private List<Vocabulary> getVocabularyFrom(Cursor cursor){
+        List<Vocabulary> vocabularies = new ArrayList<>();
+        if(cursor.moveToFirst()){
+            do {
+                Vocabulary vocabulary = new Vocabulary();
+                vocabulary.setLocalId(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry._ID)));
+                vocabulary.setId(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_ID)));
+                vocabulary.setName(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_NAME)));
+                vocabulary.setCId(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_CID)));
+                vocabulary.setImage(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_IMAGE)));
+                vocabulary.setImageRemote(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_REMOTE)));
+                vocabulary.setLanguage(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_LANGUAGE)));
+                vocabulary.setUsername(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_CREATER)));
+                vocabulary.setCreateTime(new Date(cursor.getLong(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_CREATE_TIME))));
+                vocabulary.setTranslation(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_TRANSLATION)));
+                vocabulary.setImageLocal(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_LOCAL)));
+                vocabularies.add(vocabulary);
+            }while(cursor.moveToNext());
+        }
+        return vocabularies;
+    }
+
+    /**
+     * Vocabulary转换为ContentValues
+     * @param vocabulary
+     * @return
+     */
+    private ContentValues vocabulary2ContentValues(Vocabulary vocabulary){
+        ContentValues values = new ContentValues();
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_ID, vocabulary.getId());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_NAME, vocabulary.getName());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_CID, vocabulary.getCId());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_IMAGE, vocabulary.getImage());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_REMOTE, vocabulary.getImageRemote());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_LANGUAGE, vocabulary.getLanguage());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_CREATER, vocabulary.getUsername());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_CREATE_TIME, vocabulary.getCreateTime().getTime());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_TRANSLATION, vocabulary.getTranslation());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_LOCAL, vocabulary.getImageLocal());
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_UPLOADED, vocabulary.isUpload() ? 1 : 0);
+        if(vocabulary.getLocalId() != null){
+            values.put(VocabularyContract.VocabularyEntry._ID, vocabulary.getLocalId());
+        }
+        return values;
+    }
+    //endregion
+
+    //region 数据库
+    /**
+     * 数据库 插入
+     * @param context
+     * @param table
+     * @param nullColumnHack
+     * @param values
+     * @return
+     */
+    private long insert(Context context, String table, String nullColumnHack, ContentValues values){
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        return dbHelper.insert(table, nullColumnHack, values);
+    }
+    /**
+     * 数据库 更新
+     * @param context
+     * @param table
+     * @param values
+     * @param whereClause
+     * @param whereArgs
+     * @return
+     */
+    private int update(Context context, String table, ContentValues values, String whereClause,
+                      String[] whereArgs){
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        return dbHelper.update(table, values, whereClause, whereArgs);
+    }
+
+    /**
+     * 数据库 查找
+     * @param context
+     * @param table
+     * @param columns
+     * @param selection
+     * @param selectionArgs
+     * @param groupBy
+     * @param having
+     * @param orderBy
+     * @return
+     */
+    private Cursor query(Context context, String table, String[] columns, String selection,
+                         String[] selectionArgs, String groupBy, String having,
+                         String orderBy){
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        return dbHelper.query(table, columns, selection, selectionArgs,
+                groupBy, having, orderBy);
+    }
+
+    /**
+     * 数据库 删除
+     * @param context
+     * @param table
+     * @param whereClause
+     * @param whereArgs
+     * @return
+     */
+    private int delete(Context context, String table, String whereClause, String[] whereArgs){
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        return dbHelper.delete(table, whereClause, whereArgs);
+    }
+    //endregion
 }

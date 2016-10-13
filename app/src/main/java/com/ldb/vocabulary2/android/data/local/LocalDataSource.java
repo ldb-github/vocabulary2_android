@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 
 import com.ldb.vocabulary2.android.model.Category;
+import com.ldb.vocabulary2.android.model.Vocabulary;
 import com.ldb.vocabulary2.android.network.BaseNetworkRequest;
 
 import java.util.List;
@@ -22,18 +23,24 @@ public interface LocalDataSource {
      */
     Category getCategoryById(Context context, String id);
     /**
-     * 新增
+     * 新增本地词汇分类
      * @param context
      * @param category
      */
     void addCategory(Context context, Category category);
     /**
-     * 修改
+     * 更新本地词汇分类
      * @param context
      * @param category
      */
     void updateCategory(Context context, Category category);
 
+    /**
+     * 删除收藏
+     * @param context
+     * @param ids 本地id
+     */
+    int deleteCollections(Context context, List<String> ids);
     /**
      * 获取本地词汇类别列表
      * @param context
@@ -46,4 +53,32 @@ public interface LocalDataSource {
      * @return
      */
     List<Category> getCollectionList(Context context);
+
+    /**
+     * 根据词汇id获取本地词汇
+     * @param context
+     * @param id
+     * @return
+     */
+    Vocabulary getVocabularyById(Context context, String id);
+    /**
+     * 新增本地词汇
+     * @param context
+     * @param vocabulary
+     */
+    void addVocabulary(Context context, Vocabulary vocabulary);
+    /**
+     * 更新本地词汇
+     * @param context
+     * @param vocabulary
+     */
+    void updateVocabulary(Context context, Vocabulary vocabulary);
+
+    /**
+     * 删除词汇
+     * @param context
+     * @param ids
+     * @return
+     */
+    int deleteVocabularies(Context context, List<String> ids);
 }

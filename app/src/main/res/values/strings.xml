@@ -22,12 +22,15 @@
 
     <string name="parse_data_error">服务器数据错误</string>
     <string name="parse_register_date_error">注册时间错误</string>
-    <string name="parse_category_create_time_error">类别创建时间错误</string>
+    <string name="parse_create_time_error">创建时间错误</string>
 
 
     <string name="category_edit_name_text">名称</string>
     <string name="category_image_text">图片</string>
     <string name="category_edit_translation_text">译文</string>
+
+    <string name="vocabulary_edit_name_text">名称</string>
+    <string name="vocabulary_edit_translation_text">译文</string>
 
     <string name="select_image_text">选择图片</string>
 

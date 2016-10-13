@@ -20,4 +20,11 @@
     <dimen name="card_image_height">200dp</dimen>
     <dimen name="cards_button_width">48dp</dimen>
 
+    <dimen name="avatar_text_icon_title_height">72dp</dimen>
+    <dimen name="avatar_text_icon_text_primary">16sp</dimen>
+    <dimen name="avatar_text_icon_text_secondary">14sp</dimen>
+    <dimen name="avatar_text_icon_avatar_left_padding">16dp</dimen>
+    <dimen name="avatar_text_icon_text_left_padding">72dp</dimen>
+    <dimen name="avatar_text_icon_icon_padding">16dp</dimen>
+
 </resources>

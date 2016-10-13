@@ -73,4 +73,8 @@ public interface Callback {
     public interface PostCategoryCallback extends RequestErrorCallback{
         void onSuccess(String message, Category category);
     }
+
+    public interface PostVocabularyCallback extends RequestErrorCallback{
+        void onSuccess(String message, Vocabulary vocabulary);
+    }
 }

@@ -61,7 +61,7 @@ public class CommunicationContract {
 //    public static final String KEY_VOCABULARY_INDEX = "v_index";
     public static final String KEY_VOCABULARY_NAME = "name";
     public static final String KEY_VOCABULARY_IMAGE = "image";
-    public static final String KEY_VOCABULARY__IMAGE_REMOTE = "image_remote";
+    public static final String KEY_VOCABULARY_IMAGE_REMOTE = "image_remote";
     public static final String KEY_VOCABULARY_LANGUAGE = "lan";
     public static final String KEY_VOCABULARY_SECOND_LANGUAGE = "s_lan";
     public static final String KEY_VOCABULARY_CREATER = "creater";

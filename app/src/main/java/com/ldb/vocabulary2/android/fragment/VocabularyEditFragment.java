@@ -17,48 +17,69 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.data.Callback;
-import com.ldb.vocabulary2.android.data.Constants;
 import com.ldb.vocabulary2.android.data.Repository;
-import com.ldb.vocabulary2.android.model.Category;
+import com.ldb.vocabulary2.android.model.Vocabulary;
 import com.ldb.vocabulary2.android.util.DateUtil;
 
 import java.io.IOException;
 
 /**
- * Created by lsp on 2016/9/26.
+ * Created by lsp on 2016/10/1.
  */
-public class CategoryEditFragment extends Fragment {
-
-    private static final String TAG = CategoryEditFragment.class.getSimpleName();
+public class VocabularyEditFragment extends Fragment {
+    private static final String TAG = VocabularyEditFragment.class.getSimpleName();
 
     private static final int REQUEST_IMAGE = 0;
+    private static final String ARG_CATEGORY_ID = "category_id";
+    private static final String ARG_CATEGORY_UPLOAD = "category_upload";
 
+    private String mCategoryId;
+    private boolean mUpload;
     private ImageView mImageView;
     private String mImagePath;
 
-    public static CategoryEditFragment newInstance(){
-        return new CategoryEditFragment();
+    public static VocabularyEditFragment newInstance(String categoryId, boolean upload){
+        Bundle bundle = new Bundle();
+        bundle.putString(ARG_CATEGORY_ID, categoryId);
+        bundle.putBoolean(ARG_CATEGORY_UPLOAD, upload);
+
+        VocabularyEditFragment fragment = new VocabularyEditFragment();
+        fragment.setArguments(bundle);
+        return fragment;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        Bundle arg = getArguments();
+        if(arg != null){
+            mCategoryId = arg.getString(ARG_CATEGORY_ID);
+            mUpload = arg.getBoolean(ARG_CATEGORY_UPLOAD);
+        }
     }
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_category_edit, container, false);
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        final View view = inflater.inflate(R.layout.fragment_vocabulary_edit, container, false);
 
-        mImageView = (ImageView) view.findViewById(R.id.image_for_upload);
+//        ((Button) view.findViewById(R.id.image_select))
+//                .setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        showFileChooser();
+//                    }
+//                });
+
+        mImageView = (ImageView) view.findViewById(R.id.vocabulary_image_for_upload);
         mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -66,11 +87,13 @@ public class CategoryEditFragment extends Fragment {
             }
         });
 
-//        ((Button) view.findViewById(R.id.image_upload))
+//        ((Button) view.findViewById(R.id.upload_vocabulary_button))
 //                .setOnClickListener(new View.OnClickListener() {
 //                    @Override
 //                    public void onClick(View v) {
-//
+//                        String categoryName =
+//                                ((EditText) view.findViewById(R.id.vocabulary_name)).getText().toString();
+////                        mPresenter.uploadVocabulary(categoryName, mImagePath, mCategoryId, mUpload);
 //                    }
 //                });
 
@@ -123,9 +146,9 @@ public class CategoryEditFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id){
-            case android.R.id.home:
-                getActivity().finish();
-                return true;
+//            case android.R.id.home:
+//                getActivity().finish();
+//                return true;
             case R.id.action_done:
                 save();
                 return true;
@@ -134,59 +157,55 @@ public class CategoryEditFragment extends Fragment {
     }
 
     private void save(){
-        String categoryName =
-                ((EditText) getView().findViewById(R.id.category_name)).getText().toString();
+        String vocabularyName =
+                ((EditText) getView().findViewById(R.id.vocabulary_name)).getText().toString();
         String translation =
-                ((EditText) getView().findViewById(R.id.category_translation)).getText().toString();
-        Category category = new Category();
-        category.setName(categoryName);
-        category.setTranslation(translation);
-        category.setImageLocal(mImagePath);
-        category.setUploaded(false);
-        category.setFavorite(true);
-        category.setHasNew(false);
-        category.setLastRead(DateUtil.getCurrentDate());
-        category.setFavoriteCount(0);
-        category.setWordCount(0);
-        category.setCreateTime(DateUtil.getCurrentDate());
-        category.setLastRead(DateUtil.getCurrentDate());
-        boolean isPublic = ((CheckBox) getView().findViewById(R.id.category_public)).isChecked();
-        if(isPublic){
-            uploadCategory(category);
+                ((EditText) getView().findViewById(R.id.vocabulary_translation)).getText().toString();
+        Vocabulary vocabulary = new Vocabulary();
+        vocabulary.setName(vocabularyName);
+        vocabulary.setCId(mCategoryId);
+        vocabulary.setImageLocal(mImagePath);
+        vocabulary.setTranslation(translation);
+        vocabulary.setCreateTime(DateUtil.getCurrentDate());
+        vocabulary.setUpload(false);
+        if(mUpload) {
+            uploadVocabulary(vocabulary);
         }else{
-            saveLocal(category);
+            saveLocal(vocabulary);
         }
 
     }
 
-    private void saveLocal(Category category){
+    private void saveLocal(Vocabulary vocabulary){
         Repository repository = Repository.getInstance();
-        repository.saveCategoryLocal(getActivity(), category);
+        repository.saveVocabularyLocal(getActivity(), vocabulary);
     }
 
-    private void uploadCategory(final Category category) {
+    private void uploadVocabulary(final Vocabulary vocabulary){
         Repository repository = Repository.getInstance();
-        repository.postCategory(getActivity(), category, new Callback.PostCategoryCallback() {
+        repository.postVocabulary(getActivity(), vocabulary, new Callback.PostVocabularyCallback() {
             @Override
-            public void onSuccess(String message, Category categoryReturn) {
-                category.setUploaded(true);
-                category.setId(categoryReturn.getId());
-                category.setImage(categoryReturn.getImage());
-                category.setImageRemote(categoryReturn.getImageRemote());
-                category.setCreateTime(categoryReturn.getCreateTime());
+            public void onSuccess(String message, Vocabulary vocabularyReturn) {
+                vocabulary.setId(vocabularyReturn.getId());
+                vocabulary.setImage(vocabularyReturn.getImage());
+                vocabulary.setImageRemote(vocabularyReturn.getImageRemote());
+                vocabulary.setCreateTime(vocabularyReturn.getCreateTime());
+                vocabulary.setUpload(true);
                 // 更新本地数据
-                saveLocal(category);
+                saveLocal(vocabulary);
 
-                onUploadCategory(true, getString(R.string.upload_category_success_text));
+                onUploadVocabulary(true, getString(R.string.upload_category_success_text));
             }
 
             @Override
             public void onError(String error) {
-                saveLocal(category);
-                onUploadCategory(false, getString(R.string.upload_category_error_text));
+                saveLocal(vocabulary);
+                onUploadVocabulary(false, getString(R.string.upload_category_error_text));
             }
         });
     }
+
+
 
     private void showFileChooser(){
         Intent intent = new Intent(Intent.ACTION_PICK ,
@@ -196,19 +215,13 @@ public class CategoryEditFragment extends Fragment {
         startActivityForResult(intent, REQUEST_IMAGE);
     }
 
-    public void onUploadCategory(boolean isOk, String message) {
-        Intent data = new Intent();
+    public void onUploadVocabulary(boolean isOk, String message) {
         if(isOk){
             // TODO 暂时先显示成功，之后应该弹框询问是增加词汇还是返回主界面
-//            showMessage(message);
-            data.putExtra(Constants.KEY_CODE, Constants.VALUE_CODE_OK);
+            showMessage(message);
         }else {
-//            showError(message);
-            data.putExtra(Constants.KEY_CODE, Constants.VALUE_CODE_ERROR);
+            showError(message);
         }
-        data.putExtra(Constants.KEY_MESSAGE, message);
-        getActivity().setResult(R.id.submit, data);
-        getActivity().finish();
     }
 
     public void showError(String error) {

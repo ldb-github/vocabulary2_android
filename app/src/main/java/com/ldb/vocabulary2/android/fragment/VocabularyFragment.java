@@ -1,5 +1,6 @@
 package com.ldb.vocabulary2.android.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -21,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.ldb.vocabulary2.android.R;
+import com.ldb.vocabulary2.android.activity.VocabularyEditActivity;
 import com.ldb.vocabulary2.android.adapter.VocabularyAdapter;
 import com.ldb.vocabulary2.android.data.Repository;
 import com.ldb.vocabulary2.android.model.Category;
@@ -123,9 +125,14 @@ public class VocabularyFragment extends Fragment {
     private void setFavorite(boolean favorite){
         mCategory.setFavorite(favorite);
         mCategory.setLastRead(DateUtil.getCurrentDate());
-        mCategory.setUploaded(true);
         Repository repository = Repository.getInstance();
-        repository.saveCategoryLocal(getActivity(), mCategory);
+        if(!favorite){
+            List<String> ids = new ArrayList<>();
+            ids.add(mCategory.getLocalId());
+            repository.deleteCollections(getActivity(), ids);
+        }else{
+            repository.saveCategoryLocal(getActivity(), mCategory);
+        }
         setFab(favorite);
     }
 
@@ -138,14 +145,6 @@ public class VocabularyFragment extends Fragment {
                     .getDrawable(getActivity(), R.drawable.ic_favorite_white_border));
         }
     }
-
-    public void updateDataSet(List<Vocabulary> vocabularyList) {
-        mVocabularyList.addAll(vocabularyList);
-        if(mVocabularyView != null) {
-            mVocabularyView.getAdapter().notifyDataSetChanged();
-        }
-    }
-
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -163,9 +162,9 @@ public class VocabularyFragment extends Fragment {
                 refresh();
                 return true;
             case R.id.vocabulary_menu_add:
-//                Intent intent = VocabularyEditActivity.newIntent(getActivity(),
-//                        mCategory.getId(), mCategory.getSubIndex());
-//                startActivity(intent);
+                Intent intent = VocabularyEditActivity.newIntent(getActivity(),
+                        mCategory.getId(), mCategory.isUploaded());
+                startActivity(intent);
                 return true;
         }
         return super.onOptionsItemSelected(item);

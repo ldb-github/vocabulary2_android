@@ -67,11 +67,12 @@ public class VocabularyContract {
         public static final String COLUMN_CREATE_TIME = "create_time";
         public static final String COLUMN_TRANSLATION = "translation";
         public static final String COLUMN_IMAGE_LOCAL = "image_local";
+        public static final String COLUMN_UPLOADED = "uploaded";
 
         public static final String[] PROJECTION = {
                 _ID, COLUMN_ID, COLUMN_CID, COLUMN_NAME, COLUMN_IMAGE, COLUMN_IMAGE_REMOTE,
                 COLUMN_LANGUAGE, COLUMN_CREATER, COLUMN_CREATE_TIME, COLUMN_TRANSLATION,
-                COLUMN_IMAGE_LOCAL
+                COLUMN_IMAGE_LOCAL, COLUMN_UPLOADED
         };
 
         public static final String CREATE_TABLE = "CREATE TABLE " +
@@ -87,6 +88,7 @@ public class VocabularyContract {
                 VocabularyContract.VocabularyEntry.COLUMN_CREATE_TIME + " INTEGER, " +
                 VocabularyContract.VocabularyEntry.COLUMN_TRANSLATION + " TEXT, " +
                 VocabularyContract.VocabularyEntry.COLUMN_IMAGE_LOCAL + " TEXT, " +
+                VocabularyContract.VocabularyEntry.COLUMN_UPLOADED + " INTEGER, " +
                 " FOREIGN KEY (" + VocabularyContract.VocabularyEntry.COLUMN_CID +
                 ") REFERENCES " + VocabularyContract.CategoryEntry.TABLE_NAME +
                 " (" + VocabularyContract.CategoryEntry.COLUMN_ID + ") );";
