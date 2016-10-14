@@ -43,10 +43,5 @@
         android:checked="true"
         android:text="@string/category_public_text"/>
 
-    <!--<Button-->
-        <!--android:id="@+id/image_upload"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="upload"/>-->
 </LinearLayout>
 

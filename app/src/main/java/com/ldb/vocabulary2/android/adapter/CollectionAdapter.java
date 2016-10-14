@@ -102,6 +102,10 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
         return mCategories.size();
     }
 
+    public Category getItem(int position){
+        return mCategories.get(position);
+    }
+
     public void setOnItemClickListener(OnItemClickListener listener){
         mOnItemClickListener = listener;
     }
@@ -125,25 +129,16 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
         notifyDataSetChanged();
     }
 
-    public void saveLocal(Category category){
+    private void saveLocal(Category category){
         Repository repository = Repository.getInstance();
         repository.saveCategoryLocal(mActivity, category);
     }
 
-    public void uploadCategory(final Category category) {
+    private void uploadCategory(final Category category) {
         Repository repository = Repository.getInstance();
         repository.postCategory(mActivity, category, new Callback.PostCategoryCallback() {
             @Override
             public void onSuccess(String message, Category categoryReturn) {
-//                category.setUploaded(true);
-//                category.setId(categoryReturn.getId());
-//                category.setImage(categoryReturn.getImage());
-//                category.setImageRemote(categoryReturn.getImageRemote());
-//                category.setCreateTime(categoryReturn.getCreateTime());
-//                // 更新本地数据
-//                saveLocal(category);
-
-//                notifyItemChanged(category.getLocalId(), categoryReturn);
                 Message data = mHandler.obtainMessage(MESSAGE_UPLOAD);
                 Bundle bundle = new Bundle();
                 bundle.putString(EXTRA_LOCALID, category.getLocalId());
@@ -152,7 +147,8 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
                 mHandler.sendMessage(data);
 
                 // TODO 上传成功处理
-
+                // 上传词汇分类的词汇
+                uploadVocabulariesFor(category.getLocalId(), categoryReturn);
             }
 
             @Override
@@ -162,7 +158,8 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
         });
     }
 
-    public void notifyItemChanged(String localId, Category newCategory){
+
+    private void notifyItemChanged(String localId, Category newCategory){
         int position = getItemPositionById(localId);
         if(position >= 0) {
             Category category = getItem(position);
@@ -180,6 +177,14 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
 
     }
 
+    private void updateCategory(Category oldCategory, Category newCategory){
+
+    }
+
+    private void uploadVocabulariesFor(String localId, Category category){
+
+    }
+
     private int getItemPositionById(String id) {
         for (int i = 0; i < mCategories.size(); i++) {
             if (mCategories.get(i).getLocalId().equals(id)) {
@@ -187,10 +192,6 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
             }
         }
         return -1;
-    }
-
-    public Category getItem(int position){
-        return mCategories.get(position);
     }
 
     class CollectionHandlerCallback implements Handler.Callback{

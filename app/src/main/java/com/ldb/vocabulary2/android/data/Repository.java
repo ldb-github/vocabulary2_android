@@ -2,6 +2,7 @@ package com.ldb.vocabulary2.android.data;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.data.local.LocalDataSource;
@@ -47,6 +48,7 @@ public class Repository {
         return INSTANCE;
     }
 
+    //region Category
     /**
      * 保存词汇分类信息到本地
      * @param context
@@ -67,16 +69,6 @@ public class Repository {
                 mLocalDataSource.addCategory(context, category);
             }
         }
-    }
-
-    /**
-     * 删除收藏
-     * @param context
-     * @param ids 本地id
-     * @return
-     */
-    public int deleteCollections(Context context, List<String> ids){
-        return mLocalDataSource.deleteCollections(context, ids);
     }
 
     /**
@@ -197,6 +189,7 @@ public class Repository {
                                         try {
                                             Category category = getCategoryFrom(categoryArray.getJSONObject(i));
                                             category.setUploaded(true);
+                                            mergeWithLocalCategory(context, category);
                                             categoryList.add(category);
                                         } catch (ParseException e) {
                                             message.append(context.getResources()
@@ -220,6 +213,24 @@ public class Repository {
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * 合并本地词汇分类信息
+     * @param context
+     * @param remoteCategory
+     */
+    private void mergeWithLocalCategory(Context context, Category remoteCategory){
+        Category localCategory = mLocalDataSource.getCategoryById(context, remoteCategory.getId());
+        if(localCategory != null){
+            remoteCategory.setImageLocal(localCategory.getImageLocal());
+            remoteCategory.setFavorite(localCategory.isFavorite());
+            remoteCategory.setLastRead(localCategory.getLastRead());
+            remoteCategory.setHasNew(localCategory.isHasNew());
+            remoteCategory.setLastUpdate(localCategory.getLastUpdate());
+            remoteCategory.setLocalId(localCategory.getLocalId());
+            mLocalDataSource.updateCategory(context, remoteCategory);
         }
     }
 
@@ -268,7 +279,9 @@ public class Repository {
 
         return category;
     }
+    //endregion
 
+    //region Collection
     /**
      * 获取收藏的词汇分类
      * @param context
@@ -276,6 +289,41 @@ public class Repository {
      */
     public List<Category> getCollectionList(Context context){
         return  mLocalDataSource.getCollectionList(context);
+    }
+
+    /**
+     * 删除收藏
+     * @param context
+     * @param ids 本地id
+     * @return
+     */
+    public int deleteCollections(Context context, List<String> ids){
+        return mLocalDataSource.deleteCollections(context, ids);
+    }
+    //endregion
+
+    //region Vocabulary
+    public void uploadVocabulariesFor(Context context, String localId, Category category){
+        List<Vocabulary> vocabularies =
+                mLocalDataSource.getVocabulariesToUploadByCIdLocal(context, localId);
+        if(vocabularies != null){
+            for(int i = 0; i < vocabularies.size(); i++){
+                Vocabulary vocabulary = vocabularies.get(i);
+                vocabulary.setCIdLocal(localId);
+                vocabulary.setCId(category.getId());
+                postVocabulary(context, vocabulary, new Callback.PostVocabularyCallback() {
+                    @Override
+                    public void onSuccess(String message, Vocabulary vocabulary) {
+
+                    }
+
+                    @Override
+                    public void onError(String error) {
+
+                    }
+                });
+            }
+        }
     }
 
     /**
@@ -391,13 +439,32 @@ public class Repository {
     /**
      * 从服务器获取词汇信息
      * @param context
-     * @param categoryId
+     * @param category
      * @param page
      * @param secondLan
      * @param callback
      */
-    public void getVocabularyList(@NonNull final Context context, String categoryId, int page,
+    public void getVocabularyList(@NonNull final Context context, Category category, int page,
                                   String secondLan, final Callback.RequestVocabularyListCallback callback){
+        String categoryId = category.getId();
+        String categoryLocalId = category.getLocalId();
+        // 先根据词汇分类本地id取本地词汇列表
+        if(!TextUtils.isEmpty(categoryLocalId)) {
+            List<Vocabulary> vocabularies =
+                    mLocalDataSource.getVocabulariesByCIdLocal(context, categoryLocalId, page);
+            callback.onSuccess(context.getResources()
+                    .getString(R.string.request_vocabulary_local), vocabularies);
+            return;
+        }
+        // 再根据词汇分类id取本地词汇列表
+        if(!TextUtils.isEmpty(categoryId)) {
+            List<Vocabulary> vocabularies =
+                    mLocalDataSource.getVocabulariesByCId(context, categoryId, page);
+            callback.onSuccess(context.getResources()
+                    .getString(R.string.request_vocabulary_local), vocabularies);
+            return;
+        }
+        // 如果本地没有，再从服务器获取
         if (!DeviceUtil.isNetworkConnected(context)) {
             callback.onError(context.getResources().getString(R.string.network_not_connected));
         }else {
@@ -456,6 +523,16 @@ public class Repository {
     }
 
     /**
+     * 删除本地词汇
+     * @param context
+     * @param ids 本地id
+     * @return
+     */
+    public int deleteVocabularyLocal(Context context, List<String> ids){
+        return mLocalDataSource.deleteVocabularies(context, ids);
+    }
+
+    /**
      * 解析Json生成Vocabulary
      * @param jsonObject
      * @return
@@ -498,6 +575,6 @@ public class Repository {
         }
         return vocabulary;
     }
-
+    //endregion
 
 }

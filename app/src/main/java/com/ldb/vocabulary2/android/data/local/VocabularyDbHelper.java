@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.CancellationSignal;
 
 import com.ldb.vocabulary2.android.model.Vocabulary;
 
@@ -13,7 +14,7 @@ import com.ldb.vocabulary2.android.model.Vocabulary;
  */
 public class VocabularyDbHelper extends SQLiteOpenHelper {
 
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 1;
     private static final String DB_NAME = "vocabulary.db";
     private static VocabularyDbHelper mInstance;
 
@@ -39,9 +40,7 @@ public class VocabularyDbHelper extends SQLiteOpenHelper {
         // TODO 正式发布需要删除
         switch (oldVersion){
             case 1:
-                db.execSQL("ALTER TABLE " +
-                        VocabularyContract.VocabularyEntry.TABLE_NAME + " ADD COLUMN " +
-                        VocabularyContract.VocabularyEntry.COLUMN_UPLOADED + " INTEGER ;");
+
         }
     }
 
@@ -79,13 +78,29 @@ public class VocabularyDbHelper extends SQLiteOpenHelper {
      * @param groupBy
      * @param having
      * @param orderBy
+     * @param limit
      * @return
      */
     public Cursor query(String table, String[] columns, String selection,
-                         String[] selectionArgs, String groupBy, String having,
-                         String orderBy){
+                        String[] selectionArgs, String groupBy, String having,
+                        String orderBy, String limit){
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy);
+        Cursor cursor = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit);
+        cursor.moveToFirst();
+        return cursor;
+    }
+
+    /**
+     * 原生sql
+     * @param sql
+     * @param selectionArgs
+     * @param cancellationSignal
+     * @return
+     */
+    public Cursor rawQuery(String sql, String[] selectionArgs,
+                           CancellationSignal cancellationSignal) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.rawQuery(sql, selectionArgs, cancellationSignal);
         cursor.moveToFirst();
         return cursor;
     }

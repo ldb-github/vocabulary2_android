@@ -111,8 +111,10 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         repository.getCategoryList(mActivity, mPage, null, null, new Callback.RequestCategoryListCallback() {
             @Override
             public void onSuccess(String message, List<Category> categoryList) {
-                mCategories.addAll(categoryList);
-                notifyDataSetChanged();
+                if(categoryList != null) {
+                    mCategories.addAll(categoryList);
+                    notifyDataSetChanged();
+                }
                 callback.onLoadSuccess(message);
                 callback.onAfterLoad();
             }

@@ -1,6 +1,8 @@
 package com.ldb.vocabulary2.android.fragment;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -94,7 +96,12 @@ public class VocabularyFragment extends Fragment {
         mCategoryImageView = (ImageView) view.findViewById(R.id.category_image);
 
         collapsingToolbarLayout.setTitle(mCategory.getName());
-        Picasso.with(getActivity()).load(mCategory.getImage()).into(mCategoryImageView);
+        Bitmap bitmap = BitmapFactory.decodeFile(mCategory.getImageLocal());
+        if(bitmap != null) {
+            mCategoryImageView.setImageBitmap(bitmap);
+        }else {
+            Picasso.with(getActivity()).load(mCategory.getImage()).into(mCategoryImageView);
+        }
 
         mFab = (FloatingActionButton) view.findViewById(R.id.fab);
         setFab(mCategory.isFavorite());
@@ -119,6 +126,19 @@ public class VocabularyFragment extends Fragment {
 
     private void setUpVocabularyRecycler(){
         mVocabularyView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mAdapter.setOnItemClickListener(new VocabularyAdapter.OnItemClickListener() {
+            @Override
+            public int onClick(View view, int position) {
+                int id = view.getId();
+                switch (id){
+                    case R.id.vocabulary_delete:
+                        // TODO 弹框提示是否删除
+
+                        return 1;
+                }
+                return 0;
+            }
+        });
         mVocabularyView.setAdapter(mAdapter);
     }
 
@@ -135,6 +155,11 @@ public class VocabularyFragment extends Fragment {
         }
         setFab(favorite);
     }
+
+    private void deleteFavorite(){
+
+    }
+
 
     private void setFab(boolean favorite){
         if(favorite){
@@ -163,7 +188,7 @@ public class VocabularyFragment extends Fragment {
                 return true;
             case R.id.vocabulary_menu_add:
                 Intent intent = VocabularyEditActivity.newIntent(getActivity(),
-                        mCategory.getId(), mCategory.isUploaded());
+                        mCategory);
                 startActivity(intent);
                 return true;
         }
@@ -205,50 +230,4 @@ public class VocabularyFragment extends Fragment {
             });
         }
     }
-
-//    private class VocabularyHolder extends RecyclerView.ViewHolder{
-//
-//        private Vocabulary mVocabulary;
-//
-//        private ImageView mVocabularyImage;
-//        private TextView mVocabularyName;
-//
-//        public VocabularyHolder(LayoutInflater inflater, ViewGroup parent) {
-//            super(inflater.inflate(R.layout.item_vocabulary, parent, false));
-//            mVocabularyImage = (ImageView) itemView.findViewById(R.id.vocabulary_image);
-//            mVocabularyName = (TextView) itemView.findViewById(R.id.vocabulary_name);
-//        }
-//
-//        public void bindItem(Vocabulary vocabulary){
-//            mVocabulary = vocabulary;
-//            mVocabularyName.setText(mVocabulary.getName());
-//            if(mVocabulary.getImage() != null && !mVocabulary.getImage().trim().isEmpty()) {
-//                Picasso.with(getActivity()).load(mVocabulary.getImage()).into(mVocabularyImage);
-//            }
-//        }
-//    }
-
-//    private class VocabularyAdapter extends RecyclerView.Adapter<VocabularyHolder>{
-//
-//        private List<Vocabulary> mVocabularyList;
-//
-//        public VocabularyAdapter(List<Vocabulary> vocabularyList){
-//            mVocabularyList = vocabularyList;
-//        }
-//
-//        @Override
-//        public VocabularyHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//            return new VocabularyHolder(LayoutInflater.from(parent.getContext()), parent);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(VocabularyHolder holder, int position) {
-//            holder.bindItem(mVocabularyList.get(position));
-//        }
-//
-//        @Override
-//        public int getItemCount() {
-//            return mVocabularyList.size();
-//        }
-//    }
 }

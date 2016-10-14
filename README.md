@@ -13,3 +13,8 @@
 <p>调整"取消收藏"功能，原来是直接把本地库数据favorite置为false,现改为直接从本地库删除</p>
 <p>对LocalDataSourceImpl, VocabularyDbHelper调整，使数据库访问方法独立出来，减少代码冗余，使方法功能更单一</p>
 <p>对Vocabulary表结构变更，增加upload字段</p>
+
+2016.10.14
+<p>增加"本地未上传词汇上传"、"删除未上传词汇"功能</p>
+<p>修改item_vocabulary.xml，使其更符合material design规范</p>
+<p>对Vocabulary表结构变更，增加cid_local字段</p>

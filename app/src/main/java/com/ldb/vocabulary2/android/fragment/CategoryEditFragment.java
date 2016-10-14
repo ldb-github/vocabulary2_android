@@ -162,6 +162,7 @@ public class CategoryEditFragment extends Fragment {
     private void saveLocal(Category category){
         Repository repository = Repository.getInstance();
         repository.saveCategoryLocal(getActivity(), category);
+
     }
 
     private void uploadCategory(final Category category) {

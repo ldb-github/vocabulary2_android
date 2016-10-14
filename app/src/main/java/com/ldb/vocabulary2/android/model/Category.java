@@ -20,11 +20,13 @@ public class Category implements Parcelable {
     private String mUsername;
     private Date mCreateTime;
     private String mTranslation;
+    // local properties
     private String mImageLocal;
     private boolean mIsUploaded;
     private boolean mIsFavorite;
     private Date mLastRead;
     private boolean mHasNew;
+    private Date mLastUpdate;
     private String mLocalId;
 
     public Category() {
@@ -56,6 +58,12 @@ public class Category implements Parcelable {
             mLastRead = new Date(time);
         }
         mHasNew = source.readInt() == 1;
+        time = source.readLong();
+        if (time == 0) {
+            mLastUpdate = null;
+        } else {
+            mLastUpdate = new Date(time);
+        }
         mLocalId = source.readString();
     }
 
@@ -89,6 +97,11 @@ public class Category implements Parcelable {
             dest.writeLong(mLastRead.getTime());
         }
         dest.writeInt(mHasNew ? 1 : 0);
+        if (mLastUpdate == null) {
+            dest.writeLong(0);
+        } else {
+            dest.writeLong(mLastUpdate.getTime());
+        }
         dest.writeString(mLocalId);
     }
 
@@ -222,6 +235,14 @@ public class Category implements Parcelable {
 
     public void setHasNew(boolean hasNew) {
         mHasNew = hasNew;
+    }
+
+    public Date getLastUpdate() {
+        return mLastUpdate;
+    }
+
+    public void setLastUpdate(Date lastUpdate) {
+        mLastUpdate = lastUpdate;
     }
 
     public String getLocalId() {

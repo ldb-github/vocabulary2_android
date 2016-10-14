@@ -12,5 +12,6 @@ public class Constants {
 
     public static final int REQUEST_CATEGORY_ADD = 1;
 
+    public static final int VOCABULARY_PAGE_SIZE = 20;
 
 }

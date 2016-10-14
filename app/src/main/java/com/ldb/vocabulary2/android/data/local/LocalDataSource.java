@@ -1,13 +1,9 @@
 package com.ldb.vocabulary2.android.data.local;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import android.support.annotation.NonNull;
 
 import com.ldb.vocabulary2.android.model.Category;
 import com.ldb.vocabulary2.android.model.Vocabulary;
-import com.ldb.vocabulary2.android.network.BaseNetworkRequest;
 
 import java.util.List;
 
@@ -18,7 +14,7 @@ public interface LocalDataSource {
     /**
      * 根据分类id获取本地分类
      * @param context
-     * @param id
+     * @param id 分类id
      * @return
      */
     Category getCategoryById(Context context, String id);
@@ -38,9 +34,9 @@ public interface LocalDataSource {
     /**
      * 删除收藏
      * @param context
-     * @param ids 本地id
+     * @param localIds 本地id
      */
-    int deleteCollections(Context context, List<String> ids);
+    int deleteCollections(Context context, List<String> localIds);
     /**
      * 获取本地词汇类别列表
      * @param context
@@ -57,10 +53,42 @@ public interface LocalDataSource {
     /**
      * 根据词汇id获取本地词汇
      * @param context
-     * @param id
+     * @param id 词汇id
      * @return
      */
     Vocabulary getVocabularyById(Context context, String id);
+    /**
+     * 获取词汇分类本地保存的数量
+     * @param context
+     * @param cId
+     * @return
+     */
+    int getVocabularyCountForCategory(Context context, String cId);
+    /**
+     * 根据词汇分类id获取本地词汇列表
+     * @param context
+     * @param cId 词汇分类id
+     * @param page
+     * @return
+     */
+    List<Vocabulary> getVocabulariesByCId(Context context, String cId, int page);
+
+    /**
+     * 根据词汇分类本地id获取本地词汇列表
+     * @param context
+     * @param cIdLocal 词汇分类本地id
+     * @param page
+     * @return
+     */
+    List<Vocabulary> getVocabulariesByCIdLocal(Context context, String cIdLocal, int page);
+
+    /**
+     * 根据词汇分类本地id获取本地待上传的词汇列表
+     * @param context
+     * @param cIdLocal 词汇分类本地id
+     * @return
+     */
+    List<Vocabulary> getVocabulariesToUploadByCIdLocal(Context context, String cIdLocal);
     /**
      * 新增本地词汇
      * @param context
@@ -77,8 +105,8 @@ public interface LocalDataSource {
     /**
      * 删除词汇
      * @param context
-     * @param ids
+     * @param localIds 本地id
      * @return
      */
-    int deleteVocabularies(Context context, List<String> ids);
+    int deleteVocabularies(Context context, List<String> localIds);
 }

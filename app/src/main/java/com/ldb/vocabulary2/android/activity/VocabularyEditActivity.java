@@ -11,14 +11,13 @@ import android.view.MenuItem;
 
 import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.fragment.VocabularyEditFragment;
+import com.ldb.vocabulary2.android.model.Category;
 
 public class VocabularyEditActivity extends AppCompatActivity {
 
-    private static final String EXTRA_CATEGORY_ID = "category_id";
-    private static final String EXTRA_CATEGORY_UPLOAD = "category_upload";
+    private static final String EXTRA_CATEGORY = "category";
 
-    private String mCategoryId;
-    private boolean mUpload;
+    private Category mCategory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,15 +33,14 @@ public class VocabularyEditActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if(intent != null){
-            mCategoryId = intent.getStringExtra(EXTRA_CATEGORY_ID);
-            mUpload = intent.getBooleanExtra(EXTRA_CATEGORY_UPLOAD, false);
+            mCategory = intent.getParcelableExtra(EXTRA_CATEGORY);
         }
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         VocabularyEditFragment fragment =
                 (VocabularyEditFragment) fragmentManager.findFragmentById(R.id.container);
         if (fragment == null) {
-            fragment = VocabularyEditFragment.newInstance(mCategoryId, mUpload);
+            fragment = VocabularyEditFragment.newInstance(mCategory);
             fragmentManager
                     .beginTransaction()
                     .add(R.id.container, fragment)
@@ -61,10 +59,9 @@ public class VocabularyEditActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public static Intent newIntent(Context context, String categoryId, boolean upload){
+    public static Intent newIntent(Context context, Category category){
         Intent intent = new Intent(context, VocabularyEditActivity.class);
-        intent.putExtra(EXTRA_CATEGORY_ID, categoryId);
-        intent.putExtra(EXTRA_CATEGORY_UPLOAD, upload);
+        intent.putExtra(EXTRA_CATEGORY, category);
         return intent;
     }
 }

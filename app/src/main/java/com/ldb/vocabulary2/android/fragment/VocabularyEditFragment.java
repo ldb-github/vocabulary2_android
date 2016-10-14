@@ -17,13 +17,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.ldb.vocabulary2.android.R;
 import com.ldb.vocabulary2.android.data.Callback;
 import com.ldb.vocabulary2.android.data.Repository;
+import com.ldb.vocabulary2.android.model.Category;
 import com.ldb.vocabulary2.android.model.Vocabulary;
 import com.ldb.vocabulary2.android.util.DateUtil;
 
@@ -36,18 +36,15 @@ public class VocabularyEditFragment extends Fragment {
     private static final String TAG = VocabularyEditFragment.class.getSimpleName();
 
     private static final int REQUEST_IMAGE = 0;
-    private static final String ARG_CATEGORY_ID = "category_id";
-    private static final String ARG_CATEGORY_UPLOAD = "category_upload";
+    private static final String ARG_CATEGORY = "category";
 
-    private String mCategoryId;
-    private boolean mUpload;
+    private Category mCategory;
     private ImageView mImageView;
     private String mImagePath;
 
-    public static VocabularyEditFragment newInstance(String categoryId, boolean upload){
+    public static VocabularyEditFragment newInstance(Category category){
         Bundle bundle = new Bundle();
-        bundle.putString(ARG_CATEGORY_ID, categoryId);
-        bundle.putBoolean(ARG_CATEGORY_UPLOAD, upload);
+        bundle.putParcelable(ARG_CATEGORY, category);
 
         VocabularyEditFragment fragment = new VocabularyEditFragment();
         fragment.setArguments(bundle);
@@ -61,8 +58,7 @@ public class VocabularyEditFragment extends Fragment {
 
         Bundle arg = getArguments();
         if(arg != null){
-            mCategoryId = arg.getString(ARG_CATEGORY_ID);
-            mUpload = arg.getBoolean(ARG_CATEGORY_UPLOAD);
+            mCategory = arg.getParcelable(ARG_CATEGORY);
         }
     }
 
@@ -71,14 +67,6 @@ public class VocabularyEditFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_vocabulary_edit, container, false);
 
-//        ((Button) view.findViewById(R.id.image_select))
-//                .setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        showFileChooser();
-//                    }
-//                });
-
         mImageView = (ImageView) view.findViewById(R.id.vocabulary_image_for_upload);
         mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,16 +74,6 @@ public class VocabularyEditFragment extends Fragment {
                 showFileChooser();
             }
         });
-
-//        ((Button) view.findViewById(R.id.upload_vocabulary_button))
-//                .setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        String categoryName =
-//                                ((EditText) view.findViewById(R.id.vocabulary_name)).getText().toString();
-////                        mPresenter.uploadVocabulary(categoryName, mImagePath, mCategoryId, mUpload);
-//                    }
-//                });
 
         return view;
     }
@@ -163,12 +141,13 @@ public class VocabularyEditFragment extends Fragment {
                 ((EditText) getView().findViewById(R.id.vocabulary_translation)).getText().toString();
         Vocabulary vocabulary = new Vocabulary();
         vocabulary.setName(vocabularyName);
-        vocabulary.setCId(mCategoryId);
+        vocabulary.setCId(mCategory.getId());
+        vocabulary.setCIdLocal(mCategory.getLocalId());
         vocabulary.setImageLocal(mImagePath);
         vocabulary.setTranslation(translation);
         vocabulary.setCreateTime(DateUtil.getCurrentDate());
-        vocabulary.setUpload(false);
-        if(mUpload) {
+        vocabulary.setUploaded(false);
+        if(mCategory.isUploaded()) {
             uploadVocabulary(vocabulary);
         }else{
             saveLocal(vocabulary);
@@ -190,7 +169,7 @@ public class VocabularyEditFragment extends Fragment {
                 vocabulary.setImage(vocabularyReturn.getImage());
                 vocabulary.setImageRemote(vocabularyReturn.getImageRemote());
                 vocabulary.setCreateTime(vocabularyReturn.getCreateTime());
-                vocabulary.setUpload(true);
+                vocabulary.setUploaded(true);
                 // 更新本地数据
                 saveLocal(vocabulary);
 

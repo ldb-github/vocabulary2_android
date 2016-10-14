@@ -3,13 +3,10 @@ package com.ldb.vocabulary2.android.data.local;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.os.CancellationSignal;
 
-import com.ldb.vocabulary2.android.data.remote.RemoteDataSourceImpl;
 import com.ldb.vocabulary2.android.model.Category;
 import com.ldb.vocabulary2.android.model.Vocabulary;
-import com.ldb.vocabulary2.android.network.BaseNetworkRequest;
-import com.ldb.vocabulary2.android.network.NetworkRequestViaVolley;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -93,9 +90,9 @@ public class LocalDataSourceImpl implements LocalDataSource{
         return categories;
     }
     @Override
-    public int deleteCollections(Context context, List<String> ids){
+    public int deleteCollections(Context context, List<String> localIds){
         StringBuilder sb = new StringBuilder();
-        for(String id : ids){
+        for(String id : localIds){
             sb.append(id).append(",");
         }
         if(sb.length() > 0){
@@ -225,6 +222,45 @@ public class LocalDataSourceImpl implements LocalDataSource{
         return null;
     }
     @Override
+    public int getVocabularyCountForCategory(Context context, String cId) {
+        String sql = " SELECT COUNT(*) FROM " + VocabularyContract.VocabularyEntry.TABLE_NAME +
+                " WHERE " + VocabularyContract.VocabularyEntry.COLUMN_CID + " = ? ";
+        String[] selectionArgs = { cId };
+        Cursor cursor = rawQuery(context, sql, selectionArgs, null);
+        return cursor.getInt(0);
+    }
+    @Override
+    public List<Vocabulary> getVocabulariesByCId(Context context, String cId, int page) {
+        String selection = VocabularyContract.VocabularyEntry.COLUMN_CID + " = ? ";
+        String[] selectionArgs = {cId};
+        List<Vocabulary> vocabularies = queryVocabulary(context, selection, selectionArgs, null, null, null);
+        if(!vocabularies.isEmpty()){
+            return vocabularies;
+        }
+        return null;
+    }
+    @Override
+    public List<Vocabulary> getVocabulariesByCIdLocal(Context context, String cIdLocal, int page) {
+        String selection = VocabularyContract.VocabularyEntry.COLUMN_CID_LOCAL + " = ? ";
+        String[] selectionArgs = {cIdLocal};
+        List<Vocabulary> vocabularies = queryVocabulary(context, selection, selectionArgs, null, null, null);
+        if(!vocabularies.isEmpty()){
+            return vocabularies;
+        }
+        return null;
+    }
+    @Override
+    public List<Vocabulary> getVocabulariesToUploadByCIdLocal(Context context, String cIdLocal) {
+        String selection = VocabularyContract.VocabularyEntry.COLUMN_CID_LOCAL + " = ? " +
+                " AND " + VocabularyContract.VocabularyEntry.COLUMN_UPLOADED + " = ? ";
+        String[] selectionArgs = {cIdLocal, "0"};
+        List<Vocabulary> vocabularies = queryVocabulary(context, selection, selectionArgs, null, null, null);
+        if(!vocabularies.isEmpty()){
+            return vocabularies;
+        }
+        return null;
+    }
+    @Override
     public void addVocabulary(Context context, Vocabulary vocabulary) {
         ContentValues values = vocabulary2ContentValues(vocabulary);
         insert(context, VocabularyContract.VocabularyEntry.TABLE_NAME, null, values);
@@ -237,9 +273,9 @@ public class LocalDataSourceImpl implements LocalDataSource{
         update(context, VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
     }
     @Override
-    public int deleteVocabularies(Context context, List<String> ids) {
+    public int deleteVocabularies(Context context, List<String> localIds) {
         StringBuilder sb = new StringBuilder();
-        for(String id : ids){
+        for(String id : localIds){
             sb.append(id).append(",");
         }
         if(sb.length() > 0){
@@ -324,6 +360,9 @@ public class LocalDataSourceImpl implements LocalDataSource{
      */
     private ContentValues vocabulary2ContentValues(Vocabulary vocabulary){
         ContentValues values = new ContentValues();
+        if(vocabulary.getLocalId() != null){
+            values.put(VocabularyContract.VocabularyEntry._ID, vocabulary.getLocalId());
+        }
         values.put(VocabularyContract.VocabularyEntry.COLUMN_ID, vocabulary.getId());
         values.put(VocabularyContract.VocabularyEntry.COLUMN_NAME, vocabulary.getName());
         values.put(VocabularyContract.VocabularyEntry.COLUMN_CID, vocabulary.getCId());
@@ -334,10 +373,8 @@ public class LocalDataSourceImpl implements LocalDataSource{
         values.put(VocabularyContract.VocabularyEntry.COLUMN_CREATE_TIME, vocabulary.getCreateTime().getTime());
         values.put(VocabularyContract.VocabularyEntry.COLUMN_TRANSLATION, vocabulary.getTranslation());
         values.put(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_LOCAL, vocabulary.getImageLocal());
-        values.put(VocabularyContract.VocabularyEntry.COLUMN_UPLOADED, vocabulary.isUpload() ? 1 : 0);
-        if(vocabulary.getLocalId() != null){
-            values.put(VocabularyContract.VocabularyEntry._ID, vocabulary.getLocalId());
-        }
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_UPLOADED, vocabulary.isUploaded() ? 1 : 0);
+        values.put(VocabularyContract.VocabularyEntry.COLUMN_CID_LOCAL, vocabulary.getCIdLocal());
         return values;
     }
     //endregion
@@ -369,7 +406,6 @@ public class LocalDataSourceImpl implements LocalDataSource{
         VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
         return dbHelper.update(table, values, whereClause, whereArgs);
     }
-
     /**
      * 数据库 查找
      * @param context
@@ -387,9 +423,21 @@ public class LocalDataSourceImpl implements LocalDataSource{
                          String orderBy){
         VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
         return dbHelper.query(table, columns, selection, selectionArgs,
-                groupBy, having, orderBy);
+                groupBy, having, orderBy, null);
     }
-
+    /**
+     * 数据库 原生sql
+     * @param context
+     * @param sql
+     * @param selectionArgs
+     * @param cancellationSignal
+     * @return
+     */
+    public Cursor rawQuery(Context context, String sql, String[] selectionArgs,
+                           CancellationSignal cancellationSignal) {
+        VocabularyDbHelper dbHelper = VocabularyDbHelper.getInstance(context);
+        return dbHelper.rawQuery(sql, selectionArgs, cancellationSignal);
+    }
     /**
      * 数据库 删除
      * @param context

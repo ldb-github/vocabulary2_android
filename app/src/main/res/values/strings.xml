@@ -20,6 +20,8 @@
 
     <string name="request_login_error">登录失败</string>
 
+    <string name="request_vocabulary_local">获取词汇列表成功</string>
+
     <string name="parse_data_error">服务器数据错误</string>
     <string name="parse_register_date_error">注册时间错误</string>
     <string name="parse_create_time_error">创建时间错误</string>
@@ -28,13 +30,12 @@
     <string name="category_edit_name_text">名称</string>
     <string name="category_image_text">图片</string>
     <string name="category_edit_translation_text">译文</string>
+    <string name="category_public_text">公开</string>
 
     <string name="vocabulary_edit_name_text">名称</string>
     <string name="vocabulary_edit_translation_text">译文</string>
 
     <string name="select_image_text">选择图片</string>
-
-    <string name="category_public_text">公开</string>
 
     <string name="refresh_start_text">正在刷新,请稍候...</string>
     <string name="refresh_end_text">刷新完成</string>
