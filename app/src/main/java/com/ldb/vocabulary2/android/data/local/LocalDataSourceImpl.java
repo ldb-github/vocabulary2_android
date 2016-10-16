@@ -270,7 +270,7 @@ public class LocalDataSourceImpl implements LocalDataSource{
         ContentValues values = vocabulary2ContentValues(vocabulary);
         String whereClause = VocabularyContract.VocabularyEntry._ID + " = ? ";
         String[] whereArgs = {vocabulary.getLocalId()};
-        update(context, VocabularyContract.CategoryEntry.TABLE_NAME, values, whereClause, whereArgs);
+        update(context, VocabularyContract.VocabularyEntry.TABLE_NAME, values, whereClause, whereArgs);
     }
     @Override
     public int deleteVocabularies(Context context, List<String> localIds) {
@@ -347,6 +347,13 @@ public class LocalDataSourceImpl implements LocalDataSource{
                         cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_TRANSLATION)));
                 vocabulary.setImageLocal(cursor.getString(
                         cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_IMAGE_LOCAL)));
+                int index = cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_UPLOADED);
+                int value = cursor.getInt(
+                        index );
+                boolean uploaded = (value == 1);
+                vocabulary.setUploaded(uploaded);
+                vocabulary.setCIdLocal(cursor.getString(
+                        cursor.getColumnIndex(VocabularyContract.VocabularyEntry.COLUMN_CID_LOCAL)));
                 vocabularies.add(vocabulary);
             }while(cursor.moveToNext());
         }

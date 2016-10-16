@@ -303,18 +303,24 @@ public class Repository {
     //endregion
 
     //region Vocabulary
-    public void uploadVocabulariesFor(Context context, String localId, Category category){
+    public void uploadVocabulariesFor(final Context context, String localId, Category category){
         List<Vocabulary> vocabularies =
                 mLocalDataSource.getVocabulariesToUploadByCIdLocal(context, localId);
         if(vocabularies != null){
             for(int i = 0; i < vocabularies.size(); i++){
-                Vocabulary vocabulary = vocabularies.get(i);
+                final Vocabulary vocabulary = vocabularies.get(i);
                 vocabulary.setCIdLocal(localId);
                 vocabulary.setCId(category.getId());
                 postVocabulary(context, vocabulary, new Callback.PostVocabularyCallback() {
                     @Override
-                    public void onSuccess(String message, Vocabulary vocabulary) {
-
+                    public void onSuccess(String message, Vocabulary vocabularyReturn) {
+                        // 更新本地数据
+                        vocabulary.setUploaded(true);
+                        vocabulary.setId(vocabularyReturn.getId());
+                        vocabulary.setImage(vocabularyReturn.getImage());
+                        vocabulary.setImageRemote(vocabularyReturn.getImageRemote());
+                        vocabulary.setCreateTime(vocabularyReturn.getCreateTime());
+                        saveVocabularyLocal(context, vocabulary);
                     }
 
                     @Override
@@ -418,6 +424,12 @@ public class Repository {
         param.setFile(false);
         param.setValue(vocabulary.getTranslation());
         param.setFieldName(CommunicationContract.KEY_VOCABULARY_TRANSLATION);
+        postParams.add(param);
+
+        param = new PostParam();
+        param.setFile(false);
+        param.setValue(vocabulary.getCId());
+        param.setFieldName(CommunicationContract.KEY_CATEGORY_ID);
         postParams.add(param);
 
         String imagePath = vocabulary.getImageLocal();

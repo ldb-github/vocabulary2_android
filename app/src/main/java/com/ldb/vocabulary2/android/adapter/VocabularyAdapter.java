@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -230,7 +229,7 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         });
     }
 
-    private void notifyItemChanged(String localId, Vocabulary newVocabulary){
+    private void notifyItemUploaded(String localId, Vocabulary newVocabulary){
         int position = getItemPositionById(localId);
         if(position >= 0) {
             Vocabulary vocabulary = getItem(position);
@@ -244,7 +243,6 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
             mVocabularies.set(position, vocabulary);
             // 更新本地数据
             saveLocal(vocabulary);
-//            notifyItemChanged(position);
             notifyDataSetChanged();
         }
 
@@ -268,7 +266,7 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
                     Bundle bundle = msg.getData();
                     String localId = bundle.getString(EXTRA_LOCALID);
                     Vocabulary vocabulary = bundle.getParcelable(EXTRA_VOCABULARY);
-                    notifyItemChanged(localId, vocabulary);
+                    notifyItemUploaded(localId, vocabulary);
                     return true;
                 case MESSAGE_DELETE:
                     Bundle deleteData = msg.getData();

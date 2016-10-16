@@ -152,6 +152,7 @@ public class VocabularyFragment extends Fragment {
             repository.deleteCollections(getActivity(), ids);
         }else{
             repository.saveCategoryLocal(getActivity(), mCategory);
+            // TODO 保存词汇到本地
         }
         setFab(favorite);
     }

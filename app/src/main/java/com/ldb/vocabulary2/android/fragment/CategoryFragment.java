@@ -57,6 +57,7 @@ public class CategoryFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_category, container, false);
         mCategoryRecycler = (RecyclerView) rootView.findViewById(R.id.category_recycler_view);
         setUpCategoryRecycler();
+//        mCategoryRecycler.onIt
 
         return rootView;
     }
@@ -74,8 +75,7 @@ public class CategoryFragment extends Fragment {
                 refresh();
                 return true;
             case R.id.category_menu_add:
-                Intent intent = new Intent(getActivity(), CategoryEditActivity.class);
-                startActivity(intent);
+                add();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -94,6 +94,17 @@ public class CategoryFragment extends Fragment {
                 showError(message);
             }
         }
+    }
+
+    private void setUpCategoryRecycler(){
+        mCategoryRecycler.setLayoutManager(new GridLayoutManager(getActivity(), 2));
+        mAdapter.setOnItemClickListener(new CategoryAdapter.OnItemClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                clickItem(position);
+            }
+        });
+        mCategoryRecycler.setAdapter(mAdapter);
     }
 
     private void refresh() {
@@ -122,17 +133,23 @@ public class CategoryFragment extends Fragment {
         }
     }
 
-    private void setUpCategoryRecycler(){
-        mCategoryRecycler.setLayoutManager(new GridLayoutManager(getActivity(), 2));
-        mAdapter.setOnItemClickListener(new CategoryAdapter.OnItemClickListener() {
-            @Override
-            public void onClick(View view, int position) {
-                Intent intent = VocabularyActivity.newIntent(
-                        getActivity(), mAdapter.getItem(position));
-                startActivity(intent);
-            }
-        });
-        mCategoryRecycler.setAdapter(mAdapter);
+    private void loadMore(){
+
+    }
+
+    private void add() {
+        Intent intent = new Intent(getActivity(), CategoryEditActivity.class);
+        startActivity(intent);
+    }
+
+    private void clickItem(int position){
+        Intent intent = VocabularyActivity.newIntent(
+                getActivity(), mAdapter.getItem(position));
+        startActivity(intent);
+    }
+
+    private void refreshCurrentPage(){
+
     }
 
     private void showMessage(String message){

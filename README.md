@@ -18,3 +18,7 @@
 <p>增加"本地未上传词汇上传"、"删除未上传词汇"功能</p>
 <p>修改item_vocabulary.xml，使其更符合material design规范</p>
 <p>对Vocabulary表结构变更，增加cid_local字段</p>
+
+2016.10.16
+<p>增加"本地词汇分类上传后自动上传此分类未上传的词汇"功能</p>
+

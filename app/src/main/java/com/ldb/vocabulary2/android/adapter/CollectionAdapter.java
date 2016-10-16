@@ -182,7 +182,8 @@ public class CollectionAdapter extends RecyclerView.Adapter<CollectionAdapter.Co
     }
 
     private void uploadVocabulariesFor(String localId, Category category){
-
+        Repository repository = Repository.getInstance();
+        repository.uploadVocabulariesFor(mActivity, localId, category);
     }
 
     private int getItemPositionById(String id) {
