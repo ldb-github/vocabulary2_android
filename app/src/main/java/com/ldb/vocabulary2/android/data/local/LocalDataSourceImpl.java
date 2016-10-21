@@ -285,6 +285,12 @@ public class LocalDataSourceImpl implements LocalDataSource{
         String[] whereArgs = { sb.toString() };
         return deleteVocabulary(context, whereClause, whereArgs);
     }
+    @Override
+    public int deleteVocabulariesFor(Context context, String cIdLocal) {
+        String whereClause = VocabularyContract.VocabularyEntry.COLUMN_CID_LOCAL +  " = ? ";
+        String[] whereArgs = { cIdLocal };
+        return deleteVocabulary(context, whereClause, whereArgs);
+    }
 
     /**
      * 词汇查询

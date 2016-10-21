@@ -55,6 +55,8 @@ public class Repository {
      * @param category
      */
     public void saveCategoryLocal(Context context, Category category){
+        // TODO 图片保存到本地
+
         if(category.getLocalId() != null && !category.getLocalId().trim().isEmpty()){
             mLocalDataSource.updateCategory(context, category);
         }else{
@@ -67,6 +69,7 @@ public class Repository {
                 mLocalDataSource.updateCategory(context, category);
             }else {
                 mLocalDataSource.addCategory(context, category);
+                mergeWithLocalCategory(context, category);
             }
         }
     }
@@ -282,6 +285,32 @@ public class Repository {
     //endregion
 
     //region Collection
+
+    /**
+     * 收藏词汇分类
+     * @param context
+     * @param category
+     */
+    public void saveCollection(final Context context, Category category){
+        saveCategoryLocal(context, category);
+        // TODO 是全部都下载到本地呢,还是只要1页就好了?
+        int page = 0;
+        page = page + 1;
+        getVocabularyList(context, category, page, null, new Callback.RequestVocabularyListCallback() {
+            @Override
+            public void onSuccess(String message, List<Vocabulary> vocabularyList) {
+                for(Vocabulary vocabulary : vocabularyList){
+                    saveVocabularyLocal(context, vocabulary);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+
+            }
+        });
+    }
+
     /**
      * 获取收藏的词汇分类
      * @param context
@@ -298,7 +327,11 @@ public class Repository {
      * @return
      */
     public int deleteCollections(Context context, List<String> ids){
-        return mLocalDataSource.deleteCollections(context, ids);
+        mLocalDataSource.deleteCollections(context, ids);
+        for(String id : ids) {
+            deleteVocabularyLocalFor(context, id);
+        }
+        return 1;
     }
     //endregion
 
@@ -338,6 +371,8 @@ public class Repository {
      * @param vocabulary
      */
     public void saveVocabularyLocal(Context context, Vocabulary vocabulary){
+        // TODO 图片保存到本地
+
         if(vocabulary.getLocalId() != null && !vocabulary.getLocalId().trim().isEmpty()){
             mLocalDataSource.updateVocabulary(context, vocabulary);
         }else{
@@ -459,22 +494,26 @@ public class Repository {
     public void getVocabularyList(@NonNull final Context context, Category category, int page,
                                   String secondLan, final Callback.RequestVocabularyListCallback callback){
         String categoryId = category.getId();
-        String categoryLocalId = category.getLocalId();
+        final String categoryLocalId = category.getLocalId();
         // 先根据词汇分类本地id取本地词汇列表
         if(!TextUtils.isEmpty(categoryLocalId)) {
             List<Vocabulary> vocabularies =
                     mLocalDataSource.getVocabulariesByCIdLocal(context, categoryLocalId, page);
-            callback.onSuccess(context.getResources()
-                    .getString(R.string.request_vocabulary_local), vocabularies);
-            return;
+            if(vocabularies != null) {
+                callback.onSuccess(context.getResources()
+                        .getString(R.string.request_vocabulary_local), vocabularies);
+                return;
+            }
         }
         // 再根据词汇分类id取本地词汇列表
         if(!TextUtils.isEmpty(categoryId)) {
             List<Vocabulary> vocabularies =
                     mLocalDataSource.getVocabulariesByCId(context, categoryId, page);
-            callback.onSuccess(context.getResources()
-                    .getString(R.string.request_vocabulary_local), vocabularies);
-            return;
+            if(vocabularies != null) {
+                callback.onSuccess(context.getResources()
+                        .getString(R.string.request_vocabulary_local), vocabularies);
+                return;
+            }
         }
         // 如果本地没有，再从服务器获取
         if (!DeviceUtil.isNetworkConnected(context)) {
@@ -502,18 +541,12 @@ public class Repository {
                                         Vocabulary vocabulary = new Vocabulary();
                                         try {
                                             vocabulary = getVocabularyFrom(jsonObject);
+                                            vocabulary.setCIdLocal(categoryLocalId);
+                                            vocabulary.setUploaded(true);
                                         } catch (ParseException e) {
                                             message.append(context.getResources()
                                                     .getString(R.string.parse_create_time_error));
                                         }
-//                                        vocabulary.setId(jsonObject.getString(
-//                                                CommunicationContract.KEY_VOCABULARY_ID));
-//                                        vocabulary.setName(jsonObject.getString(
-//                                                CommunicationContract.KEY_VOCABULARY_NAME));
-//                                        if(jsonObject.has(CommunicationContract.KEY_VOCABULARY_IMAGE)) {
-//                                            vocabulary.setImage(jsonObject.getString(
-//                                                    CommunicationContract.KEY_VOCABULARY_IMAGE));
-//                                        }
                                         vocabularyList.add(vocabulary);
                                     }
                                 }
@@ -542,6 +575,11 @@ public class Repository {
      */
     public int deleteVocabularyLocal(Context context, List<String> ids){
         return mLocalDataSource.deleteVocabularies(context, ids);
+    }
+
+    public int deleteVocabularyLocalFor(Context context, String cIdLocal){
+        mLocalDataSource.deleteVocabulariesFor(context, cIdLocal);
+        return 1;
     }
 
     /**

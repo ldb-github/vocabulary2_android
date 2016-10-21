@@ -109,4 +109,12 @@ public interface LocalDataSource {
      * @return
      */
     int deleteVocabularies(Context context, List<String> localIds);
+
+    /**
+     * 删除本地某一词汇分类的所有词汇
+     * @param context
+     * @param cIdLocal 词汇分类本地id
+     * @return
+     */
+    int deleteVocabulariesFor(Context context, String cIdLocal);
 }
